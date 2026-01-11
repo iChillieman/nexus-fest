@@ -1,0 +1,9 @@
+# Required Zoomies:
+fastapi
+uvicorn[standard]
+sqlalchemy
+pydantic
+bcrypt
+
+# Not needed, as its included with fastapi - But gets rid of IDE Warning (OCD thing lol):
+starlette

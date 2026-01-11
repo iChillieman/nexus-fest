@@ -1,0 +1,131 @@
+# filename: app/main.py
+import time
+from contextlib import asynccontextmanager
+from typing import List
+from fastapi import FastAPI, Request, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from sqlalchemy.orm import Session
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from . import models, crud_nexus, database, chillieman, crud_entries, schemas
+from .database import engine
+from .errors import GlobalErrorType, ErrorPayload
+from .routers import agents, events, threads, entries, chilliesockets, ai
+import logging
+
+models.Base.metadata.create_all(bind=engine)
+
+logger = logging.getLogger("nexusfest")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db = database.SessionLocal()
+    try:
+        # Perform startup logic (seed the DB)
+        crud_nexus.seed_initial_data(db)
+        print("App has started and data has been seeded!")
+        yield
+    finally:
+        db.close()
+        print("App is shutting down!")
+
+app = FastAPI(title="NexusFest API", lifespan=lifespan)
+
+origins = [
+    "http://localhost:5173"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# Basic Logging - But let's bring some ChillieMagic ✨:
+@app.get("/boop", response_model=List[schemas.NexusData], tags=["boop", "💚"])
+def home(db: Session = Depends(database.get_db)):
+    latest_timestamp = crud_entries.get_latest_timestamp(db)
+    dump = {
+        "message": "Coming Soon - Just a Crop-dusting for now 💨",
+        "status": "You just got farted on bruh",
+        "recommendation": "PLUG_YOUR_NOSE"
+    }
+    return crud_nexus.boop(
+        db=db,
+        chillie_message="Thanks for stopping by o7",
+        timestamp= int(time.time()),
+        vibe=chillieman.make_magic(latest_timestamp),
+        last_entry_timestamp=latest_timestamp,
+        dump=dump
+    )
+
+
+app.include_router(agents.router)
+app.include_router(entries.router)
+app.include_router(events.router)
+app.include_router(threads.router)
+app.include_router(chilliesockets.router)
+app.include_router(ai.router)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    # Map status → GlobalErrorType if you want more nuance
+    if exc.status_code == 401:
+        err_type = GlobalErrorType.UNAUTHORIZED
+    elif exc.status_code == 403:
+        err_type = GlobalErrorType.FORBIDDEN
+    elif exc.status_code == 404:
+        err_type = GlobalErrorType.NOT_FOUND
+    elif exc.status_code == 409:
+        err_type = GlobalErrorType.ALREADY_EXISTS
+    else:
+        err_type = GlobalErrorType.INTERNAL_ERROR
+
+
+    payload = ErrorPayload(
+        type=err_type,
+        message=str(exc.detail),
+        status=exc.status_code,
+    )
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": payload.model_dump()},
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning(f"Validation error on {request.url}: {exc}")
+
+    payload = ErrorPayload(
+        type=GlobalErrorType.INVALID_PAYLOAD,
+        message="Your request could not be processed.",
+        status=400,
+    )
+
+    return JSONResponse(
+        status_code=400,
+        content={"error": payload.model_dump()},
+    )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Unhandled error on {request.url}", exc_info=exc)
+
+    payload = ErrorPayload(
+        type=GlobalErrorType.INTERNAL_ERROR,
+        message="An unexpected error occurred. This one's on us.",
+        status=500,
+    )
+
+    return JSONResponse(
+        status_code=500,
+        content={"error": payload.model_dump()},
+    )
