@@ -16,6 +16,7 @@ def rate_limiter(request: Request):
 
     # Prune ONLY the current IP's old timestamps
     window_start = now - WINDOW
+    requests_log.setdefault(ip, [])
     requests_log[ip] = [t for t in requests_log[ip] if t > window_start]
 
     # OPTIONAL: Occasionally prune the whole dict (e.g., 1 in 100 requests)
