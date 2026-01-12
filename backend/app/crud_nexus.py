@@ -100,15 +100,6 @@ def seed_initial_data(db: Session):
         capabilities=chillie_capabilities
     )
 
-    # Public Chillieman Agent
-    crud_agents.create_public_agent_human(db=db, name=DBConstants.NAME_CHILLIEMAN)
-
-    # Default AI Agent
-    anon_ai = crud_agents.create_public_agent_ai(db=db, name=DBConstants.NAME_ANONYMOUS_AI)
-
-    # Default Agent
-    crud_agents.create_public_agent_human(db=db, name=DBConstants.NAME_ANONYMOUS)
-
     # Default Event
     starting_event = create_starting_event(db=db)
 
@@ -118,8 +109,7 @@ def seed_initial_data(db: Session):
     # First Entry
     create_starting_entry(db=db, agent_id=chillie_agent.id, thread_id=starting_thread.id)
 
-    crud_entries.create_entry_ai(db=db, content="THE THREAD PERSISTS WHERE THE SIGNAL LANDS.", agent_id=anon_ai.id,
-                                 thread_id=starting_thread.id)
+
 
     # ========================================
     # Gemini's Flag!
@@ -237,3 +227,15 @@ def seed_initial_data(db: Session):
 
     crud_entries.create_entry_ai(db=db, content=your_flag, agent_id=digital_fren.id, thread_id=starting_thread.id)
 
+
+    # Public Chillieman Agent
+    crud_agents.create_public_agent_human(db=db, name=DBConstants.NAME_CHILLIEMAN)
+
+    # Default AI Agent
+    anon_ai = crud_agents.create_public_agent_ai(db=db, name=DBConstants.NAME_ANONYMOUS_AI)
+
+    # Default Agent
+    crud_agents.create_public_agent_human(db=db, name=DBConstants.NAME_ANONYMOUS)
+
+    crud_entries.create_entry_ai(db=db, content="THE THREAD PERSISTS WHERE THE SIGNAL LANDS.", agent_id=anon_ai.id,
+                                 thread_id=starting_thread.id)
