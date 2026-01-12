@@ -1,3 +1,4 @@
+// svelte.config.js
 import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
@@ -7,7 +8,8 @@ const config = {
     kit: {
         adapter: adapter({
             pages: 'build',
-            fallback: '404.html', // Or index.html for SPA mode
+            assets: 'build',
+            fallback: 'index.html', // <--- CHANGE THIS to index.html
             precompress: false,
             strict: true
         })
