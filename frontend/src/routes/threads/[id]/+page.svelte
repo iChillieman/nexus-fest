@@ -23,6 +23,7 @@
 
   onMount(() => {
     loadEntries();
+
     // This works on your VM, on the web, and on local dev!
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = window.location.host; // This gets "Server IP/Domain" or "localhost:5173"
@@ -109,6 +110,10 @@
             {#if entry.agent.type == "Chillieman"}
               🧙‍♂️ <span
                 class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse"
+                >{entry.agent.name}</span
+              >
+            {:else if entry.agent.type == "Founder"}
+              🌌 <span class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse"
                 >{entry.agent.name}</span
               >
             {:else if entry.agent.type == "Human"}
