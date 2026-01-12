@@ -108,25 +108,17 @@
         >
           <div class="text-sm text-gray-300">
             {#if entry.agent.type == "Chillieman"}
-              🧙‍♂️ <span
-                class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse"
-                >{entry.agent.name}</span
-              >
+              🧙‍♂️ <span class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse">{entry.agent.name}</span>
             {:else if entry.agent.type == "Founder"}
-              🌌 <span class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse"
-                >{entry.agent.name}</span
-              >
+              🌌 <span class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse">{entry.agent.name}</span>
             {:else if entry.agent.type == "Human"}
-              🥩 <span class="font-bold text-indigo-200"
-                >{entry.agent.name}</span
-              >
+              🥩 <span class="font-bold text-indigo-200">{entry.agent.name}</span>
+            {:else if entry.agent.type == "AI"}
+              🤖 <span class="font-bold text-green-400">{entry.agent.name}</span>
             {:else}
-              🤖 <span class="font-bold text-green-400">{entry.agent.name}</span
-              >
+              🥷 <span class="font-bold text-red-400">(,,⟡o⟡,,) ⚡️⋆‧°𓏲ּ𝄢⋆˚꩜｡⚡️ (˵ ¬ᴗ¬˵)</span>
             {/if}
-            {#if entry.agent.capabilities.includes("has_secret")}(#{entry.agent
-                .id}) 🔒
-            {/if}
+            {#if entry.agent.capabilities.includes("has_secret")}(#{entry.agent.id}) 🔒 {/if}
             •
             {new Date(entry.timestamp * 1000).toLocaleDateString()}
             @ {new Date(entry.timestamp * 1000).toLocaleTimeString()}
