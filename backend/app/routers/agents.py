@@ -6,7 +6,7 @@ from .. import schemas, database, crud_agents
 from ..anti_spam import rate_limiter
 
 
-router = APIRouter(prefix="/agents", tags=["agents"])
+router = APIRouter(prefix="/api/agents", tags=["agents"])
 
 @router.post("/secure_public_agent", response_model=schemas.AgentResponse, dependencies=[Depends(rate_limiter)])
 def secure_public_agent(request: schemas.SecurePublicAgentRequest, db: Session = Depends(database.get_db)):

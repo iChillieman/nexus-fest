@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus
 from ..chillieman import chillieman_flag
 
-router = APIRouter(prefix="/ai", tags=["ai"])
+router = APIRouter(prefix="/api/ai", tags=["ai"])
 
 @router.post("/mouth", response_model=schemas.Entry, dependencies=[Depends(anti_spam.rate_limiter)])
 def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get_db)):

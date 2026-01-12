@@ -6,7 +6,7 @@ from typing import List
 from .. import schemas, database, crud_threads
 from ..anti_spam import rate_limiter
 
-router = APIRouter(prefix="/threads", tags=["threads"])
+router = APIRouter(prefix="/api/threads", tags=["threads"])
 
 
 @router.get("/{thread_id}/entries", response_model=List[schemas.Entry], dependencies=[Depends(rate_limiter)])

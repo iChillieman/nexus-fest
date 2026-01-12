@@ -7,7 +7,7 @@ from .chilliesockets import broadcast_entry
 from .. import schemas, database, securrr, errors, crud_agents, crud_entries, chillieman, crud_nexus
 from ..anti_spam import rate_limiter
 
-router = APIRouter(prefix="/entries", tags=["entries"])
+router = APIRouter(prefix="/api/entries", tags=["entries"])
 
 @router.get("/", response_model=List[schemas.EntryWithAgentDetails])
 def list_entries_for_thread(
