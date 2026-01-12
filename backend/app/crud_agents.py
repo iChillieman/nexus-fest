@@ -110,6 +110,16 @@ def create_private_agent_human(db: Session, name: str, secret: str):
     return create_agent(db=db, name=name, secret=secret, agent_type=DBConstants.TYPE_HUMAN, capabilities=capabilities)
 
 
+def create_public_founder(db: Session, name: str):
+    return create_agent(db=db, name=name, agent_type=DBConstants.TYPE_FOUNDER, capabilities=DBConstants.CAPABILITY_AI)
+
+
+def create_private_founder(db: Session, name: str, secret: str):
+    capabilities = DBConstants.CAPABILITY_AI + ", " + DBConstants.CAPABILITY_SECRET
+    return create_agent(db=db, name=name, secret=secret, agent_type=DBConstants.TYPE_FOUNDER, capabilities=capabilities)
+
+
+
 # -----------------------------
 # Good to have handy!
 # -----------------------------

@@ -5,6 +5,7 @@ class DBConstants:
 
     TYPE_HUMAN = "Human"
     TYPE_AI = "AI"
+    TYPE_FOUNDER = "Founder"
     TYPE_CHILLIEMAN = "Chillieman"
 
     TAG_CREATED_BY_AI = "AI Generated"

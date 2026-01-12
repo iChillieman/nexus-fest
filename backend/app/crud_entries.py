@@ -3,6 +3,7 @@ import time
 from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from . import models, chillieman, schemas
+from .constants import DBConstants
 from .schemas import EntryWithAgentDetails, AgentResponse
 
 # -----------------------------
@@ -154,7 +155,7 @@ def create_entry_ai(db: Session, content: str, agent_id: int, thread_id: int | N
 
     db_entry = models.Entry(
         content=content,
-        tags="AI Generated",
+        tags=DBConstants.TAG_CREATED_BY_AI,
         agent_id=agent_id,
         thread_id=thread_id,
         timestamp=int(time.time())

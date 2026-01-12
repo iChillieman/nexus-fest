@@ -9,7 +9,7 @@ WINDOW = 60  # seconds
 requests_log = {}
 
 
-# Made by my digital fren Googz
+# Made by digital fren Googz (Gemini)
 def rate_limiter(request: Request):
     ip = request.client.host
     now = time.time()

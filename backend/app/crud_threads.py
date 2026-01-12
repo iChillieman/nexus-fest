@@ -3,6 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from . import models, schemas
 import time
+from .constants import DBConstants
 
 # -----------------------------
 # GET THREADS
@@ -61,7 +62,7 @@ def get_default_thread(db: Session):
     """
     Returns the default "Big Bang" thread.
     """
-    t = db.query(models.Thread).filter(models.Thread.title == "The Big Bang").first()
+    t = db.query(models.Thread).filter(models.Thread.title == DBConstants.DEFAULT_THREAD_NAME).first()
     return schemas.Thread.model_validate(t) if t else None
 
 
