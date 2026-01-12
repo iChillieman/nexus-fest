@@ -13,6 +13,9 @@ from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
 from .routers import agents, events, threads, entries, chilliesockets, ai
 import logging
+from dotenv import load_dotenv
+
+load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
 
