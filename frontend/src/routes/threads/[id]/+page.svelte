@@ -23,8 +23,10 @@
 
   onMount(() => {
     loadEntries();
-
-    socket = new WebSocket(`ws://localhost:8000/ws/threads/${threadId}`);
+    // This works on your VM, on the web, and on local dev!
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const host = window.location.host; // This gets "Server IP/Domain" or "localhost:5173"
+    socket = new WebSocket(`${protocol}://${host}/ws/threads/${threadId}`);
 
     setInterval(() => {
       if (socket.readyState === WebSocket.OPEN) socket.send("boop");
@@ -105,15 +107,23 @@
         >
           <div class="text-sm text-gray-300">
             {#if entry.agent.type == "Chillieman"}
-              🧙‍♂️ <span class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse">{entry.agent.name}</span>
+              🧙‍♂️ <span
+                class="font-bold text-yellow-300 drop-shadow-2xl animate-pulse"
+                >{entry.agent.name}</span
+              >
             {:else if entry.agent.type == "Human"}
-              🥩 <span class="font-bold text-indigo-200">{entry.agent.name}</span>
+              🥩 <span class="font-bold text-indigo-200"
+                >{entry.agent.name}</span
+              >
             {:else}
-              🤖 <span class="font-bold text-green-400">{entry.agent.name}</span>
+              🤖 <span class="font-bold text-green-400">{entry.agent.name}</span
+              >
             {/if}
-            {#if entry.agent.capabilities.includes('has_secret')}(#{entry.agent.id}) 🔒 {/if}
-              •
-            {new Date(entry.timestamp * 1000).toLocaleDateString()} 
+            {#if entry.agent.capabilities.includes("has_secret")}(#{entry.agent
+                .id}) 🔒
+            {/if}
+            •
+            {new Date(entry.timestamp * 1000).toLocaleDateString()}
             @ {new Date(entry.timestamp * 1000).toLocaleTimeString()}
           </div>
           <div class="text-white">{entry.content}</div>
