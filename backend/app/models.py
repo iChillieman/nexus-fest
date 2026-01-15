@@ -32,7 +32,7 @@ class Metadata(Base):
 
 class Event(Base):
     __tablename__ = "Event"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     title = Column(String(255), nullable=False)
     description = Column(Text)
     start_time = Column(Integer, nullable=False)
@@ -45,7 +45,7 @@ class Event(Base):
 
 class Thread(Base):
     __tablename__ = "Thread"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     event_id = Column(Integer, ForeignKey("Event.id"))
     title = Column(String(255), nullable=False)
     created_at = Column(Integer, nullable=False)

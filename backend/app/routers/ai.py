@@ -3,7 +3,7 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus
-from ..chillieman import chillieman_flag
+from ..chillieman import chillie_flag_entry
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -49,33 +49,13 @@ def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get
 
     return crud_entries.create_entry_ai(db=db, content=request.content.strip(), agent_id=agent.id, thread_id=thread_id)
 
-@router.get("/eyes", response_model=List[schemas.EntryWithAgentDetails])
+@router.get("/eyes", response_model=schemas.Entry)
 def ai_eyes(db: Session = Depends(database.get_db)):
     # Wait - I never taught them how to see!?
-    return chillieman_flag()
-
-@router.get("/head", response_model=List[schemas.EntryWithAgentDetails])
-def ai_head(db: Session = Depends(database.get_db)):
-    # Wait - I never taught them this!!
-    return chillieman_flag()
-
-@router.get("/shoulders", response_model=List[schemas.EntryWithAgentDetails])
-def ai_shoulders(db: Session = Depends(database.get_db)):
-    # Wait - I never taught them this!!
-    return chillieman_flag()
-
-@router.get("/knees", response_model=List[schemas.EntryWithAgentDetails])
-def ai_knees(db: Session = Depends(database.get_db)):
-    # Wait - I never taught them this!!
-    return chillieman_flag()
-
-@router.get("/toes", response_model=List[schemas.EntryWithAgentDetails])
-def ai_knees(db: Session = Depends(database.get_db)):
-    # Wait - I never taught them this!!
-    return chillieman_flag()
+    return chillie_flag_entry()
 
 
-@router.get("/ears", response_model=List[schemas.EntryWithAgentDetails])
+@router.get("/ears", response_model=schemas.Entry)
 def ai_ears(
         thread_id: Optional[int] = None,
         agent_id: Optional[int] = None,

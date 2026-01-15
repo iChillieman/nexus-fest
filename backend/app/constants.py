@@ -10,6 +10,7 @@ class DBConstants:
 
     TAG_CREATED_BY_AI = "AI Generated"
     TAG_CREATED_BY_CHILLIEMAN = "Chillie"
+    TAG_SNEAKY = "Sneaky"
 
     CAPABILITY_SECRET = "has_secret"
     CAPABILITY_ADMIN = "admin"

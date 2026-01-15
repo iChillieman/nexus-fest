@@ -5,13 +5,15 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from typing import Optional, List
 from . import models, schemas
+from .constants import DBConstants
 
 
 def get_events(
         db: Session,
         tag: Optional[str] = None,
         order_by: str = "start_time",
-        direction: str = "asc"
+        direction: str = "asc",
+        include_sneaking: bool = False
 ) -> list[type[schemas.Event]]:
     """
     Fetch events with optional tag filtering, pagination, and sorting.
@@ -19,8 +21,15 @@ def get_events(
     """
     query = db.query(models.Event)
 
+    filters = []
+
     if tag:
-        query = query.filter(models.Event.tags.contains(tag))
+        filters.append(models.Event.tags.contains(tag))
+
+    if not include_sneaking:
+        filters.append(~models.Event.tags.contains(DBConstants.TAG_SNEAKY))
+
+    query = query.filter(*filters)
 
     # Sorting
     if hasattr(models.Event, order_by):
@@ -36,7 +45,8 @@ def get_events_paginated(
         skip: int = 0,
         limit: int = 100,
         order_by: str = "start_time",
-        direction: str = "asc"
+        direction: str = "asc",
+        include_sneaking: bool = False
 ) -> schemas.PaginatedResponse[schemas.Event]:
     """
     Fetch events with optional tag filtering, pagination, and sorting.
@@ -44,8 +54,15 @@ def get_events_paginated(
     """
     query = db.query(models.Event)
 
+    filters = []
+
     if tag:
-        query = query.filter(models.Event.tags.contains(tag))
+        filters.append(models.Event.tags.contains(tag))
+
+    if not include_sneaking:
+        filters.append(~models.Event.tags.contains(DBConstants.TAG_SNEAKY))
+
+    query = query.filter(*filters)
 
     # Sorting
     if hasattr(models.Event, order_by):
