@@ -10,6 +10,9 @@
     let EVENT_NAME = "EVENT_NAME" // MOCK Data - Soon to be Populated by BE
     let THREAD_ID = "THREAD_ID" // MOCK Data - Soon to be Populated by BE
 
+    export const prerender = true;
+    export const ssr = true;
+
     function handleEnterClick() {
         showPrompt = true;
     }
