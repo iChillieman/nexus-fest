@@ -44,7 +44,6 @@ export async function getEntries(threadId: string) {
 
 export async function createEntry(threadId: string, agentId: number | null, agentSecret: string | null, content: string) {
   const body = { thread_id: threadId, agent_id: agentId, agent_secret: agentSecret, content };
-  console.debug(body)
   const res = await fetch(`${API_URL}/entries/`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
