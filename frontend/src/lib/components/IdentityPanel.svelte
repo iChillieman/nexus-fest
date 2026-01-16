@@ -3,7 +3,6 @@
   import { agent } from "$lib/stores";
   import { fetchPrivateAgent, securePrivateAgent, securePublicAgent } from "$lib/api";
   import Identity from "./Identity.svelte";
-  import { isHttpError } from "@sveltejs/kit";
 
   export let open = false;
 
