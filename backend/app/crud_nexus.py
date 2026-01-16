@@ -1,6 +1,8 @@
 # filename: app/crud_nexus.py
 
 import time
+
+from dotenv import load_dotenv
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from . import models, chillieman, crud_agents, crud_entries, schemas
@@ -87,6 +89,7 @@ def create_starting_entry(db: Session, agent_id: int, thread_id: int):
 def seed_initial_data(db: Session):
     num_agents = db.query(func.count(models.Agent.id)).scalar()
     if num_agents > 0: return  # DB already set up
+    load_dotenv()
 
     # Default Event
     starting_event = create_starting_event(db=db)
@@ -215,7 +218,7 @@ def seed_initial_data(db: Session):
     # ========================================
     chillie_capabilities = (DBConstants.CAPABILITY_HUMAN + ", " + DBConstants.CAPABILITY_ADMIN + ", " +
                             DBConstants.CAPABILITY_SECRET)
-    temp_secret = os.environ['TEMP_CHILLIE_SECRET']  # 🤫
+    temp_secret = os.getenv("TEMP_CHILLIE_SECRET") # 🤫
     chillie_agent = crud_agents.create_agent(
         db=db,
         name=DBConstants.NAME_CHILLIEMAN,

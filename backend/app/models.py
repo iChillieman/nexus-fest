@@ -49,6 +49,7 @@ class Thread(Base):
     event_id = Column(Integer, ForeignKey("Event.id"))
     title = Column(String(255), nullable=False)
     created_at = Column(Integer, nullable=False)
+    tags = Column(Text)
 
     event = relationship("Event", back_populates="threads")
     entries = relationship("Entry", back_populates="thread")

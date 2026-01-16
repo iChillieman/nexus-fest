@@ -81,6 +81,7 @@ class Event(EventBase):
 # Thread
 class ThreadBase(BaseModel):
     title: str
+    tags: Optional[str] = None
 
 
 class ThreadCreate(ThreadBase):

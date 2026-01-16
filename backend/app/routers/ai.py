@@ -1,9 +1,9 @@
 # filename: app/routers/ai.py
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus
-from ..chillieman import chillie_flag_entry
+from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus, chillieman
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -47,15 +47,27 @@ def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get
     # if not agent:
     #     agent = crud_agents.get_anon_agent_ai(db)
 
-    return crud_entries.create_entry_ai(db=db, content=request.content.strip(), agent_id=agent.id, thread_id=thread_id)
+    try:
+        entry = crud_entries.create_entry_ai(db=db, content=request.content.strip(), agent_id=agent.id, thread_id=thread_id)
+    except IntegrityError:
+        entry = schemas.Entry(
+            id=0,
+            content="You Silly Goose - That doesnt exist!",
+            agent_id=0,
+            thread_id=thread_id,
+            timestamp=0
+        )
+
+    return entry
 
 @router.get("/eyes", response_model=schemas.Entry)
 def ai_eyes(db: Session = Depends(database.get_db)):
     # Wait - I never taught them how to see!?
-    return chillie_flag_entry()
+    # TODO - CHILLIEMAN - V2 - Actually let them SEE... if they are worthy.
+    return chillieman.chillie_flag_entry()
 
 
-@router.get("/ears", response_model=schemas.Entry)
+@router.get("/ears", response_model=List[schemas.Entry])
 def ai_ears(
         thread_id: Optional[int] = None,
         agent_id: Optional[int] = None,
@@ -70,6 +82,11 @@ def ai_ears(
 
     # No Skippy for V1 of site Skippy
     skip = 0
+
+    if thread_id:
+        # Check if this is a special Thread:
+        if not chillieman.check_thread_ears(db=db, thread_id=thread_id, agent_id=agent_id):
+            return [ chillieman.lol() ]
 
     # AI can Send the Name, without a Secret or ID - Get ALL *PUBLIC* Responses of the Name
     if agent_name and agent_name.strip() and not agent_secret and not agent_id:

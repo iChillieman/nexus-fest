@@ -27,6 +27,3 @@ async def broadcast_entry(entry: dict, thread_id: int):
     if thread_id in thread_connections:
         for ws in thread_connections[thread_id]:
             await ws.send_text(json.dumps(entry))
-
-
-# TODO - CHILLIEMAN - V2 - Create WebSocket for new Threads being created - Think about Global State in the FE

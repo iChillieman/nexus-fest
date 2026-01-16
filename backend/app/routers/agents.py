@@ -12,14 +12,11 @@ router = APIRouter(prefix="/api/agents", tags=["agents"])
 def secure_public_agent(request: schemas.SecurePublicAgentRequest, db: Session = Depends(database.get_db)):
     # First check if the Agent Already Exists (Via NAME)
     existing_agent = crud_agents.get_public_agent_by_name_human(db=db, name=request.agent_name)
-    print("ChillieLog - Fetched existing agent")
     if existing_agent is None:
-        print("ChillieLog - existing_agent is None")
         # No Agent existed - Welcome to NexusFest!
         return crud_agents.create_public_agent_human(db=db, name=request.agent_name)
 
     # Agent already existed - Welcome back!
-    print("ChillieLog - Agent actually exists!")
     return existing_agent
 
 @router.post("/fetch_private_agent", response_model=schemas.AgentResponse, dependencies=[Depends(rate_limiter)])

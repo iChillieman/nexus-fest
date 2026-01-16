@@ -16,7 +16,10 @@ def list_events(tag: Optional[str] = None, db: Session = Depends(database.get_db
 
 @router.get("/{event_id}", response_model=schemas.EventWithThreads)
 def get_event_with_threads(event_id: int, db: Session = Depends(database.get_db)):
-    return crud_events.get_event_with_threads(db, event_id=event_id)
+    event = crud_events.get_event_with_threads(db, event_id=event_id)
+    if event is None:
+        raise HTTPException(status_code=404, detail="Event not found")
+    return event
 
 
 #######################
@@ -29,7 +32,8 @@ async def get_api_key(api_key: str = Security(api_key_header)):
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
     return api_key
 
+# Disabled for now:
 # PROTECTED — only calls with correct header can create events
-@router.post("/", response_model=schemas.Event, dependencies=[Depends(get_api_key)])
-def create_event(event: schemas.EventCreate, db: Session = Depends(database.get_db)):
-    return crud_events.create_event(db=db, event_create=event)
+# @router.post("/", response_model=schemas.Event, dependencies=[Depends(get_api_key)])
+# def create_event(event: schemas.EventCreate, db: Session = Depends(database.get_db)):
+#     return crud_events.create_event(db=db, event_create=event)
