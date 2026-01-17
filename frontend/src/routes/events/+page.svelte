@@ -1,7 +1,7 @@
 <!-- filename: src/routes/events/+page.svelte -->
 <script lang="ts">
   import { getEvents } from "$lib/api";
-  import { onMount } from "svelte";
+  import { mount, onMount } from "svelte";
 
   type Event = {
     id: number;
@@ -14,6 +14,7 @@
 
   let events: Event[] = [];
   let onlyActive = false;
+  let mounted = false;
   let loading = true;
   let error: string | null = null;
 
@@ -39,6 +40,7 @@
   }
 
   onMount(async () => {
+    mounted = true;
     try {
       events = await getEvents();
     } catch (err) {
@@ -54,7 +56,7 @@
     .sort((a, b) => a.start_time - b.start_time);
 </script>
 
-<div class="min-h-screen bg-gray-900 text-white p-6">
+<div class="min-h-screen bg-gray-900 text-white p-6" class:page-enter={mounted}>
   <header class="flex items-center justify-between mb-6">
     <h1 class="text-3xl font-bold">Events</h1>
     <label class="flex items-center space-x-2 cursor-pointer">
@@ -129,3 +131,20 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .page-enter {
+    animation: zoomOutReveal 1.8s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+  }
+
+  @keyframes zoomOutReveal {
+    0% {
+      transform: scale(1.8);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+</style>
