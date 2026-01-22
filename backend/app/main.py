@@ -123,7 +123,7 @@ def wrap_it_up(data):
     <html>
         <head>
             <title>Boop</title>
-            <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
         </head>
         
         <body style="background: #000; color: #fff; font-family: monospace;">
