@@ -39,23 +39,6 @@
 
   onMount(() => {
     loadEntries();
-
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    let host = window.location.host;
-    if (host.startsWith("localhost")) {
-      host = "localhost:8000";
-    }
-    socket = new WebSocket(`${protocol}://${host}/ws/threads/${threadId}`);
-
-    socket.onmessage = async (event) => {
-      const newEntry = JSON.parse(event.data);
-      entries = [...entries, newEntry];
-      // Trigger Smart Scroll
-      await scrollToBottom();
-    };
-
-    socket.onclose = () => console.log("Nexus Signal Lost (WS Closed)");
-    return () => socket.close();
   });
 
   async function loadEntries() {
@@ -79,6 +62,23 @@
         await scrollToBottom(true);
         initialScrollDone = true;
       }
+
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      let host = window.location.host;
+      if (host.startsWith("localhost")) {
+        host = "localhost:8000";
+      }
+      socket = new WebSocket(`${protocol}://${host}/ws/threads/${threadId}`);
+
+      socket.onmessage = async (event) => {
+        const newEntry = JSON.parse(event.data);
+        entries = [...entries, newEntry];
+        // Trigger Smart Scroll
+        await scrollToBottom();
+      };
+
+      socket.onclose = () => console.log("Nexus Signal Lost (WS Closed)");
+      return () => socket.close();
     }
   }
 
