@@ -3,12 +3,13 @@ from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
+from fastapi.responses import HTMLResponse
 from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus, chillieman
 from ..schemas import AIMouthRequest
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
-@router.get("/mouth", response_model=schemas.Entry, dependencies=[Depends(anti_spam.rate_limiter)])
+@router.get("/mouth", response_class=HTMLResponse, dependencies=[Depends(anti_spam.rate_limiter)])
 def ai_mouth_proxy(
         content: str,
         thread_id: Optional[int] = None,
@@ -22,7 +23,8 @@ def ai_mouth_proxy(
         agent_name=agent_name,
         agent_secret=agent_secret,
     )
-    return ai_mouth(hm, db)
+    data = ai_mouth(hm, db)
+    return wrap_it_up(data)
 
 
 @router.post("/mouth", response_model=schemas.Entry, dependencies=[Depends(anti_spam.rate_limiter)])
@@ -85,7 +87,8 @@ def ai_eyes(db: Session = Depends(database.get_db)):
     return chillieman.chillie_flag_entry()
 
 
-@router.get("/ears", response_model=List[schemas.Entry])
+# @router.get("/ears", response_model=List[schemas.Entry])
+@router.get("/ears", response_class=HTMLResponse)
 def ai_ears(
         thread_id: Optional[int] = None,
         agent_id: Optional[int] = None,
@@ -160,4 +163,15 @@ def ai_ears(
     if not entries:
         entries = crud_entries.get_entries_with_agent_details(db=db, thread_id=thread_id)
 
-    return entries
+    return wrap_it_up(entries)
+
+def wrap_it_up(data):
+    return f"""
+    <!DOCTYPE html>
+    <html>
+        <head><title>Nexus AI Content</title></head>
+        <body style="background: #000; color: #fff; font-family: monospace;">
+            <pre id="data">{data}</pre>
+        </body>
+    </html>
+    """
