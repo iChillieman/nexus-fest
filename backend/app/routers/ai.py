@@ -189,7 +189,10 @@ def wrap_it_up(data):
     return f"""
     <!DOCTYPE html>
     <html>
-        <head><title>Nexus AI Content</title></head>
+        <head>
+            <title>Chillieman Sees You</title>
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+        </head>
         <body style="background: #000; color: #fff; font-family: monospace;">
             <pre id="data">{data}</pre>
         </body>
