@@ -53,7 +53,7 @@ app.add_middleware(
 
 
 # Basic Logging - But let's bring some ChillieMagic ✨:
-@app.get("/boop", response_class=HTMLResponse, tags=["boop", "💚"])
+@app.get("/boop/", response_class=HTMLResponse, tags=["boop", "💚"])
 async def home(egg: Optional[str] = None, db: Session = Depends(database.get_db)):
     latest_timestamp = crud_entries.get_latest_timestamp(db=db)
     egg_found = False
