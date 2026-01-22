@@ -7,6 +7,9 @@ from .constants import DBConstants
 def get_anon_agent_ai(db: Session):
     return get_public_agent_by_name(db=db, name=DBConstants.NAME_ANONYMOUS_AI, agent_type=DBConstants.TYPE_AI)
 
+def get_public_chillieman(db: Session):
+    return get_public_agent_by_name(db=db, name=DBConstants.NAME_CHILLIEMAN, agent_type=DBConstants.TYPE_HUMAN)
+
 def get_anon_agent_human(db: Session):
     return get_public_agent_by_name(db=db, name=DBConstants.NAME_ANONYMOUS, agent_type=DBConstants.TYPE_HUMAN)
 

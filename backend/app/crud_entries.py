@@ -128,6 +128,17 @@ def get_latest(db: Session, amount: int = 1):
 # -----------------------------
 # CREATE ENTRY
 # -----------------------------
+def create_chillie_boop(db: Session, content: str):
+    entry = models.Entry(
+        content=content,
+        tags=DBConstants.TAG_CREATED_BY_CHILLIEMAN,
+        agent_id=1,
+        thread_id=DBConstants.ID_BOOP,
+        timestamp=int(time.time())
+    )
+
+    return create_entry(db=db, entry=entry)
+
 def create_entry(db: Session, entry: schemas.EntryCreate):
     """
     Create a new entry and return as Pydantic model.

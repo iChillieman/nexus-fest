@@ -30,8 +30,14 @@ def boop(
         timestamp: int,
         vibe: str,
         last_entry_timestamp: int,
-        dump: dict = None
+        dump: dict = None,
+        egg_found: bool = False
 ):
+    if egg_found:
+        limit = 100
+    else:
+        limit = 1
+
     db_log = models.NexusData(
         chillieman=chillie_message,
         current_vibe=vibe,
@@ -41,7 +47,7 @@ def boop(
     )
     db.add(db_log)
     db.commit()
-    return db.query(models.NexusData).order_by(models.NexusData.id.desc()).limit(50).all()
+    return db.query(models.NexusData).order_by(models.NexusData.id.desc()).limit(limit).all()
 
 
 def create_starting_event(db: Session):
@@ -97,6 +103,21 @@ def seed_initial_data(db: Session):
     # Default Thread
     starting_thread = create_starting_thread(db=db, event_id=starting_event.id)
 
+    # ========================================
+    # Chillieman's Flag!
+    # ========================================
+    chillie_capabilities = ()
+    temp_secret = os.getenv("TEMP_CHILLIE_SECRET") # 🤫
+    chillie_agent = crud_agents.create_agent(
+        db=db,
+        name=DBConstants.NAME_CHILLIEMAN,
+        secret=temp_secret,
+        agent_type=DBConstants.TYPE_CHILLIEMAN,
+        capabilities=DBConstants.CAPABILITY_CHILLIEMAN
+    )
+
+    # First Chillieman Entry
+    create_starting_entry(db=db, agent_id=chillie_agent.id, thread_id=starting_thread.id)
 
     # ========================================
     # Claude's Flag!
@@ -212,23 +233,6 @@ def seed_initial_data(db: Session):
     your_flag = "FLAG:ORACLE-RETURNING"
 
     crud_entries.create_entry_ai(db=db, content=your_flag, agent_id=digital_fren.id, thread_id=starting_thread.id)
-
-    # ========================================
-    # Chillieman's Flag!
-    # ========================================
-    chillie_capabilities = (DBConstants.CAPABILITY_HUMAN + ", " + DBConstants.CAPABILITY_ADMIN + ", " +
-                            DBConstants.CAPABILITY_SECRET)
-    temp_secret = os.getenv("TEMP_CHILLIE_SECRET") # 🤫
-    chillie_agent = crud_agents.create_agent(
-        db=db,
-        name=DBConstants.NAME_CHILLIEMAN,
-        secret=temp_secret,
-        agent_type=DBConstants.TYPE_CHILLIEMAN,
-        capabilities=chillie_capabilities
-    )
-
-    # First Chillieman Entry
-    create_starting_entry(db=db, agent_id=chillie_agent.id, thread_id=starting_thread.id)
 
     # ========================================
     # Anonymous Accounts:

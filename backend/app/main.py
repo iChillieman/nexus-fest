@@ -1,19 +1,22 @@
 # filename: app/main.py
 import time
 from contextlib import asynccontextmanager
-from typing import List
+from typing import List, Optional
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from . import models, crud_nexus, database, chillieman, crud_entries, schemas
+from . import models, crud_nexus, database, chillieman, crud_entries, schemas, crud_agents
+from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
 from .routers import agents, events, threads, entries, chilliesockets, ai
 import logging
 from dotenv import load_dotenv
+
+from .routers.chilliesockets import broadcast_entry
 
 load_dotenv()
 
@@ -50,20 +53,49 @@ app.add_middleware(
 
 # Basic Logging - But let's bring some ChillieMagic ✨:
 @app.get("/boop", response_model=List[schemas.NexusData], tags=["boop", "💚"])
-def home(db: Session = Depends(database.get_db)):
-    latest_timestamp = crud_entries.get_latest_timestamp(db)
-    dump = {
-        "message": "Coming Soon - Just a Crop-dusting for now 💨",
-        "status": "You just got farted on bruh",
-        "recommendation": "PLUG_YOUR_NOSE"
+async def home(egg: Optional[str] = None, db: Session = Depends(database.get_db)):
+    latest_timestamp = crud_entries.get_latest_timestamp(db=db) # Vibe comes from what already existed.
+
+    if egg is None:
+        chillie_message = "Thanks for stopping by o7"
+        dump = {
+            "easter_egg": "You've been Crop-dusted 💨",
+            "status": "You just got farted on bruh",
+            "recommendation": "PLUG_YOUR_NOSE"
+        }
+        entry = crud_entries.create_chillie_boop(db=db, content="Someone just Booped us...")
+        egg_found = False
+    else:
+        chillie_message = egg
+        dump = {
+            "message": "You just Found the MOST BASIC Easter Egg!",
+            "easter_egg": egg,
+            "status": "Chillieman sees you",
+            "recommendation": "FEEL_GOOD"
+        }
+
+        entry = crud_entries.create_chillie_boop(db=db, content=egg)
+        egg_found = True
+
+
+    entry_to_broadcast = entry.model_dump()
+    entry_to_broadcast["agent"] = {
+        "id": 1,
+        "name": DBConstants.NAME_CHILLIEMAN,
+        "type": DBConstants.TYPE_CHILLIEMAN,
+        "capabilities": DBConstants.CAPABILITY_CHILLIEMAN
     }
+
+    await broadcast_entry(entry_to_broadcast, thread_id=DBConstants.ID_BOOP)
+
     return crud_nexus.boop(
         db=db,
-        chillie_message="Thanks for stopping by o7",
+        chillie_message=chillie_message,
         timestamp= int(time.time()),
         vibe=chillieman.make_magic(latest_timestamp),
         last_entry_timestamp=latest_timestamp,
-        dump=dump
+        dump=dump,
+        egg_found=egg_found
     )
 
 

@@ -1,4 +1,5 @@
 class DBConstants:
+    ID_BOOP = 3
     NAME_ANONYMOUS = "Anonymous"
     NAME_ANONYMOUS_AI = "AI Agent"
     NAME_CHILLIEMAN = "Chillieman"
@@ -15,6 +16,7 @@ class DBConstants:
     CAPABILITY_SECRET = "has_secret"
     CAPABILITY_ADMIN = "admin"
     CAPABILITY_HUMAN= "meatbag"
+    CAPABILITY_CHILLIEMAN= "meatbag, admin, has_secret"
     CAPABILITY_AI = "clanka" # we don't use the Hard R around here
 
     DEFAULT_EVENT_NAME = "Origin"
