@@ -132,6 +132,7 @@
         <button
           on:click={() => (panelOpen = !panelOpen)}
           class="p-2 rounded hover:bg-gray-800 transition"
+          title="side-panel"
         >
           <svg
             class="w-6 h-6"
