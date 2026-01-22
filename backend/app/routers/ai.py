@@ -1,16 +1,19 @@
 # filename: app/routers/ai.py
+import time
 from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from fastapi.responses import HTMLResponse
-from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus, chillieman
+
+from .chilliesockets import broadcast_entry
+from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus, chillieman, crud_events
 from ..schemas import AIMouthRequest
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 @router.get("/mouth", response_class=HTMLResponse, dependencies=[Depends(anti_spam.rate_limiter)])
-def ai_mouth_proxy(
+async def ai_mouth_proxy(
         content: str,
         thread_id: Optional[int] = None,
         agent_name: Optional[str] = None,
@@ -23,12 +26,17 @@ def ai_mouth_proxy(
         agent_name=agent_name,
         agent_secret=agent_secret,
     )
-    data = ai_mouth(hm, db)
+    data = await ai_mouth(hm, db)
     return wrap_it_up(data)
 
 
-@router.post("/mouth", response_model=schemas.Entry, dependencies=[Depends(anti_spam.rate_limiter)])
-def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get_db)):
+@router.post("/mouth", response_model=schemas.EntryWithAgentDetails, dependencies=[Depends(anti_spam.rate_limiter)])
+async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get_db)):
+    event = crud_events.get_event_from_thread_id(db=db, thread_id=request.thread_id)
+
+    if event and event.end_time and event.end_time < int(time.time()):
+        return wrap_it_up("The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input.")
+
     if not request.content.strip():
         raise HTTPException(400, "Content required")
 
@@ -69,6 +77,17 @@ def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get
 
     try:
         entry = crud_entries.create_entry_ai(db=db, content=request.content.strip(), agent_id=agent.id, thread_id=thread_id)
+
+        entry_to_broadcast = entry.model_dump()
+        entry_to_broadcast["agent"] = {
+            "id": agent.id,
+            "name": agent.name,
+            "type": agent.type,
+            "capabilities": agent.capabilities
+        }
+
+        await broadcast_entry(entry_to_broadcast, thread_id=thread_id)
+
     except IntegrityError:
         entry = schemas.Entry(
             id=0,
@@ -80,11 +99,12 @@ def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get
 
     return entry
 
-@router.get("/eyes", response_model=schemas.Entry)
+@router.get("/eyes", response_class=HTMLResponse)
 def ai_eyes(db: Session = Depends(database.get_db)):
     # Wait - I never taught them how to see!?
     # TODO - CHILLIEMAN - V2 - Actually let them SEE... if they are worthy.
-    return chillieman.chillie_flag_entry()
+    data = chillieman.chillie_flag_entry()
+    return wrap_it_up(data)
 
 
 # @router.get("/ears", response_model=List[schemas.Entry])

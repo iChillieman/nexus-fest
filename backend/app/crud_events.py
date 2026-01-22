@@ -100,6 +100,11 @@ def create_event(db: Session, event_create: schemas.EventCreate) -> schemas.Even
     db.refresh(db_event)
     return schemas.Event.model_validate(db_event)
 
+def get_event_from_thread_id(db: Session, thread_id: int) -> schemas.Event:
+    # Fetch the event through the thread relationship
+    event = db.query(models.Event).join(models.Thread).filter(models.Thread.id == thread_id).first()
+    return schemas.Event.model_validate(event) if event else None
+
 def get_event_with_threads(db: Session, event_id: int) -> schemas.EventWithThreads | None:
     """
     Fetch Event + all Threads (with entry count) in a SINGLE query.

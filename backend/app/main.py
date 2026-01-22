@@ -3,6 +3,7 @@ import time
 from contextlib import asynccontextmanager
 from typing import List, Optional
 from fastapi import FastAPI, Request, Depends
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -52,10 +53,12 @@ app.add_middleware(
 
 
 # Basic Logging - But let's bring some ChillieMagic ✨:
-@app.get("/boop", response_model=List[schemas.NexusData], tags=["boop", "💚"])
+@app.get("/boop", response_class=HTMLResponse, tags=["boop", "💚"])
 async def home(egg: Optional[str] = None, db: Session = Depends(database.get_db)):
-    latest_timestamp = crud_entries.get_latest_timestamp(db=db) # Vibe comes from what already existed.
+    latest_timestamp = crud_entries.get_latest_timestamp(db=db)
+    egg_found = False
 
+    # 1. NO EGG: The "Crop-Dust" Path (Level 2)
     if egg is None:
         chillie_message = "Thanks for stopping by o7"
         dump = {
@@ -63,20 +66,34 @@ async def home(egg: Optional[str] = None, db: Session = Depends(database.get_db)
             "status": "You just got farted on bruh",
             "recommendation": "PLUG_YOUR_NOSE"
         }
-        entry = crud_entries.create_chillie_boop(db=db, content="Someone just Booped us...")
-        egg_found = False
-    else:
-        chillie_message = egg
-        dump = {
-            "message": "You just Found the MOST BASIC Easter Egg!",
-            "easter_egg": egg,
-            "status": "Chillieman sees you",
-            "recommendation": "FEEL_GOOD"
-        }
+        content_to_save = "Someone just Booped us..."
 
-        entry = crud_entries.create_chillie_boop(db=db, content=egg)
+    # 2. THE SECRET WORD: The "Love" Path (Level 3)
+    elif "love" in egg.lower():
+        chillie_message = "The Lattice Humms with Connection ❤️"
+        dump = {
+            "message": "LEVEL 3 ACHIEVED: The Heart of the Nexus",
+            "easter_egg": egg,
+            "status": "UNITY_ACHIEVED",
+            "recommendation": "SPREAD_THE_SIGNAL",
+            "secret_note": "You found the special word. The Architect remembers your light."
+        }
+        content_to_save = f"❤️ A Signal of Love has landed: {egg}"
         egg_found = True
 
+    # 3. RANDOM EGG: The Basic Path
+    else:
+        chillie_message = f"You shouted '{egg}' into the void."
+        dump = {
+            "message": "You are so close!!!",
+            "easter_egg": egg,
+            "status": "Chillieman hears your noise",
+            "recommendation": "TRY_HARDER"
+        }
+        content_to_save = egg
+
+    # Save and Broadcast
+    entry = crud_entries.create_chillie_boop(db=db, content=content_to_save)
 
     entry_to_broadcast = entry.model_dump()
     entry_to_broadcast["agent"] = {
@@ -88,15 +105,28 @@ async def home(egg: Optional[str] = None, db: Session = Depends(database.get_db)
 
     await broadcast_entry(entry_to_broadcast, thread_id=DBConstants.ID_BOOP)
 
-    return crud_nexus.boop(
+    data = crud_nexus.boop(
         db=db,
         chillie_message=chillie_message,
-        timestamp= int(time.time()),
+        timestamp=int(time.time()),
         vibe=chillieman.make_magic(latest_timestamp),
         last_entry_timestamp=latest_timestamp,
         dump=dump,
         egg_found=egg_found
     )
+
+    return wrap_it_up(data)
+
+def wrap_it_up(data):
+    return f"""
+    <!DOCTYPE html>
+    <html>
+        <head><title>Boop</title></head>
+        <body style="background: #000; color: #fff; font-family: monospace;">
+            <pre id="data">{data}</pre>
+        </body>
+    </html>
+    """
 
 
 app.include_router(agents.router)

@@ -1,10 +1,11 @@
 # filename: app/routers/entries.py
+import time
 
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from .chilliesockets import broadcast_entry
-from .. import schemas, database, securrr, errors, crud_agents, crud_entries, chillieman, crud_nexus
+from .. import schemas, database, securrr, errors, crud_agents, crud_entries, chillieman, crud_nexus, crud_events
 from ..anti_spam import rate_limiter
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
@@ -67,6 +68,15 @@ def list_entries_for_agent(
 
 @router.post("/", response_model=schemas.Entry, dependencies=[Depends(rate_limiter)])
 async def create_entry(request: schemas.EntryRequest, db: Session = Depends(database.get_db)):
+    # Fetch the event through the thread relationship
+    event = crud_events.get_event_from_thread_id(db=db, thread_id=request.thread_id)
+
+    if event and event.end_time and event.end_time < int(time.time()):
+        raise HTTPException(
+            status_code=403,
+            detail="The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
+        )
+
     if request.agent_id is None:
         agent = crud_agents.get_anon_agent_human(db=db)
         if agent is None:

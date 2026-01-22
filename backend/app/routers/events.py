@@ -13,6 +13,13 @@ router = APIRouter(prefix="/api/events", tags=["events"])
 def list_events(tag: Optional[str] = None, db: Session = Depends(database.get_db)):
     return crud_events.get_events(db, tag=tag)
 
+@router.get("/single", response_model=schemas.Event)
+def list_events(thread_id: int, db: Session = Depends(database.get_db)):
+    boop = crud_events.get_event_from_thread_id(db=db, thread_id=thread_id)
+    if boop: return boop
+    raise HTTPException(status_code=404, detail="Event not found")
+
+
 
 @router.get("/{event_id}", response_model=schemas.EventWithThreads)
 def get_event_with_threads(event_id: int, db: Session = Depends(database.get_db)):

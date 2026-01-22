@@ -19,6 +19,6 @@ class DBConstants:
     CAPABILITY_CHILLIEMAN= "meatbag, admin, has_secret"
     CAPABILITY_AI = "clanka" # we don't use the Hard R around here
 
-    DEFAULT_EVENT_NAME = "Origin"
-    DEFAULT_EVENT_DESCRIPTION = "The Dawn of NextFest"
-    DEFAULT_THREAD_NAME = "The Big Bang"
+    DEFAULT_EVENT_NAME = "NexusFest"
+    DEFAULT_EVENT_DESCRIPTION = "The Dawn of NexusFest"
+    DEFAULT_THREAD_NAME = "Humble Beginnings"
