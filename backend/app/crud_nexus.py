@@ -47,7 +47,11 @@ def boop(
     )
     db.add(db_log)
     db.commit()
-    return db.query(models.NexusData).order_by(models.NexusData.id.desc()).limit(limit).all()
+    db.refresh(db_log)
+
+    #aw jeez...
+    logz = db.query(models.NexusData).order_by(models.NexusData.id.desc()).limit(limit).all()
+    return [schemas.NexusData.model_validate(l) for l in logz]
 
 
 def create_starting_event(db: Session):

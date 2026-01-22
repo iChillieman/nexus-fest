@@ -5,11 +5,11 @@ from typing import List, Optional
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from . import models, crud_nexus, database, chillieman, crud_entries, schemas, crud_agents
+from . import models, crud_nexus, database, chillieman, crud_entries, schemas, crud_agents, anti_spam
 from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
@@ -53,7 +53,7 @@ app.add_middleware(
 
 
 # Basic Logging - But let's bring some ChillieMagic ✨:
-@app.get("/boop/", response_class=HTMLResponse, tags=["boop", "💚"])
+@app.get("/boop", response_class=HTMLResponse, tags=["boop"], dependencies=[Depends(anti_spam.rate_limiter)])
 async def home(egg: Optional[str] = None, db: Session = Depends(database.get_db)):
     latest_timestamp = crud_entries.get_latest_timestamp(db=db)
     egg_found = False
@@ -121,7 +121,11 @@ def wrap_it_up(data):
     return f"""
     <!DOCTYPE html>
     <html>
-        <head><title>Boop</title></head>
+        <head>
+            <title>Boop</title>
+            <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+        </head>
+        
         <body style="background: #000; color: #fff; font-family: monospace;">
             <pre id="data">{data}</pre>
         </body>

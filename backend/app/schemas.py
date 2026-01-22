@@ -178,3 +178,7 @@ class NexusData(BaseModel):
     last_entry_timestamp: int
     wen: int
     dump: Optional[dict]
+
+    model_config = {
+        "from_attributes": True
+    }
