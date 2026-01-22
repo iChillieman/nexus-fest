@@ -13,7 +13,7 @@
   };
 
   let events: Event[] = [];
-  let onlyActive = false;
+  let onlyActive = true;
   let mounted = false;
   let loading = true;
   let error: string | null = null;

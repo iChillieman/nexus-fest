@@ -18,6 +18,17 @@ export async function getEvent(eventId: string) {
   return res.json();
 }
 
+export async function getEventByThreadId(threadId: string) {
+  const res = await fetch(`${API_URL}/events/single?thread_id=${threadId}`);
+  if (res.status === 404) {
+    return null; // Event for this Thread Doesnt even exist - What a loser!!/1
+  }
+  if (!res.ok) {
+    throw new Error(`Failed to load event: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function getThreads(eventId: string) {
   const res = await fetch(`${API_URL}/threads/?event_id=${eventId}&include_entry_count=true`);
   if (!res.ok) throw new Error("Failed to load threads");
