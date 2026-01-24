@@ -5,7 +5,6 @@
 
     let showPrompt = false;
     let transitioning = false;
-    let BOOP_ID = 3
 
     function handleEnterClick() {
         showPrompt = true;

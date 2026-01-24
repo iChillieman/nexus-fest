@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { getEntries, createEntry, getEventByThreadId } from "$lib/api";
+  import { fetchEntries, createEntry, getEventByThreadId } from "$lib/api";
   import { agent } from "$lib/stores";
   import IdentityPanel from "$lib/components/IdentityPanel.svelte";
   import Identity from "$lib/components/Identity.svelte";
@@ -16,6 +16,8 @@
   let panelOpen = false;
   let scrollContainer: HTMLDivElement;
   let initialScrollDone = false;
+  let lowestEntryId = 0;
+  let hasMore = true;
 
   // SMART SCROLL LOGIC
   async function scrollToBottom(force = false) {
@@ -38,10 +40,10 @@
   }
 
   onMount(() => {
-    loadEntries();
+    loadInitialEntries();
   });
 
-  async function loadEntries() {
+  async function loadInitialEntries() {
     if (threadId) {
       try {
         chillieEvent = await getEventByThreadId(threadId);
@@ -53,14 +55,17 @@
         const now = Math.floor(Date.now() / 1000);
         isThreadActive = !chillieEvent.end_time || chillieEvent.end_time > now;
       } catch (err) {
+        hasMore = false;
         console.error("Failed to fetch Event:", err);
       }
 
-      entries = await getEntries(threadId);
+      await loadEntries();
+
       // Perform the "Ritual" - Initial smooth scroll to bottom after load
       if (!initialScrollDone) {
         await scrollToBottom(true);
         initialScrollDone = true;
+        await scrollToBottom(true)
       }
 
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -79,6 +84,41 @@
 
       socket.onclose = () => console.log("Nexus Signal Lost (WS Closed)");
       return () => socket.close();
+    }
+  }
+
+  async function loadEntries() {
+    // Don't fetch if there's nothing more to load
+    if (!threadId) return;
+    if (!hasMore) return;
+    hasMore = false; // Set this to false up front to quickly hide the Load More Button
+
+    try {
+      const pagedEntries = await fetchEntries(threadId, lowestEntryId);
+
+      // Reverse List so the Oldest are on top
+      let tempList = pagedEntries.items;
+      tempList = tempList.reverse();
+
+      // Skip if empty response
+      if (tempList.length === 0) {
+        hasMore = false;
+        return;
+      }
+
+      // Update the "bottom" anchor for the next page
+      // tempList[0] is now the oldest entry in this batch after reverse
+      lowestEntryId = tempList[0].id;
+
+      // Prepend the new (older) entries to the beginning of the list
+      // This keeps the list in chronological order: oldest first → newest last
+      entries = [...tempList, ...entries];
+
+      // Update hasMore flag
+      hasMore = pagedEntries.has_more;
+    } catch (err) {
+      console.error("Failed to load entries:", err);
+      hasMore = false; // prevent endless retry loop
     }
   }
 
@@ -163,6 +203,18 @@
         bind:this={scrollContainer}
         class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
       >
+        {#if initialScrollDone && hasMore}
+          <div
+            class="w-full px-4 py-2 rounded-2xl shadow-md bg-indigo-600 ml-auto text-right rounded-tr-none"
+          >
+            <button
+              on:click={loadEntries}
+              class=" w-full px-5 py-2 bg-indigo-600 rounded-full font-bold hover:bg-indigo-500 active:scale-95 transition-all"
+            >
+              Load Older Entries
+            </button>
+          </div>
+        {/if}
         {#each entries as entry}
           <div
             class="max-w-[85%] md:max-w-[70%] px-4 py-2 rounded-2xl shadow-md transition-all duration-300
@@ -191,7 +243,8 @@
                 🥷 <span class="font-bold text-red-400">(,,⟡o⟡,,)</span>
               {/if}
               {#if entry.agent.capabilities?.includes("has_secret")}🔒{/if}
-              • {new Date(entry.timestamp * 1000).toLocaleTimeString([], {
+              • {new Date(entry.timestamp * 1000).toLocaleDateString()}
+              @ {new Date(entry.timestamp * 1000).toLocaleTimeString([], {
                 hour: "2-digit",
                 minute: "2-digit",
               })}

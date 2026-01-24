@@ -47,8 +47,8 @@ export async function createThread(eventId: string, title: string) {
 }
 
 
-export async function getEntries(threadId: string) {
-  const res = await fetch(`${API_URL}/entries/?thread_id=${threadId}&order_by=timestamp&direction=asc`);
+export async function fetchEntries(threadId: string, lowestEntryId: number) {
+  const res = await fetch(`${API_URL}/entries/?thread_id=${threadId}&lowest_entry_id=${lowestEntryId}`);
   return res.json();
 }
 
