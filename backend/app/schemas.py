@@ -134,6 +134,13 @@ class EntryWithAgentDetails(Entry):
     class Config:
         from_attributes = True
 
+class PagedListEntryWithAgentDetails(BaseModel):
+    items: List[EntryWithAgentDetails]
+    has_more: bool
+
+    class Config:
+        from_attributes = True
+
 
 class EventWithThreads(Event):
     threads: List[ThreadWithCount] = []

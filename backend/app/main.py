@@ -124,9 +124,9 @@ def wrap_it_up(data):
         <head>
             <title>Boop</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <style>pre{{white-space:pre-wrap; word-wrap:break-word; overflow-wrap:break-word}}</style>
         </head>
-        
-        <body style="background: #000; color: #fff; font-family: monospace;">
+        <body style="background:#000;color:#fff;font-family:monospace;">
             <pre id="data">{data}</pre>
         </body>
     </html>

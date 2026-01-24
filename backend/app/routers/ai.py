@@ -14,34 +14,39 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 
 @router.get("/mouth", response_class=HTMLResponse, dependencies=[Depends(anti_spam.rate_limiter)])
 async def ai_mouth_proxy(
-        content: str,
+        content: Optional[str] = None,
         thread_id: Optional[int] = None,
         agent_name: Optional[str] = None,
         agent_secret: Optional[str] = None,
         db: Session = Depends(database.get_db)
 ):
+    if content is None:
+        return wrap_it_up("ChillieMouth", "You opened your mouth - but nothing came out... OOF =[")
+
     hm = AIMouthRequest(
         content=content,
         thread_id=thread_id,
         agent_name=agent_name,
         agent_secret=agent_secret,
     )
+
     data = await ai_mouth(hm, db)
-    return wrap_it_up(data)
+    return wrap_it_up("ChillieMouth", data)
 
 
-@router.post("/mouth", response_model=schemas.EntryWithAgentDetails, dependencies=[Depends(anti_spam.rate_limiter)])
 async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get_db)):
     event = crud_events.get_event_from_thread_id(db=db, thread_id=request.thread_id)
 
+    if event is None:
+        return "You Silly Goose - That Thread doesnt exist!"
     if event and event.end_time and event.end_time < int(time.time()):
-        return wrap_it_up("The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input.")
+        return "The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
 
     if not request.content.strip():
         raise HTTPException(400, "Content required")
 
     # AI didn't send a thread_id - lets select one for them!
-    if not request.thread_id:
+    if request.thread_id is None:
         # TODO - CHILLIEMAN - V2 - get popular thread:
         # thread_id = crud.get_popular_thread(db=db)
         thread_id = 1
@@ -76,6 +81,10 @@ async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(databa
     #     agent = crud_agents.get_anon_agent_ai(db)
 
     try:
+        latest_entry = crud_entries.get_latest(db=db, amount=1)[0]
+        if latest_entry.content == request.content.strip() and latest_entry.agent_id == agent.id:
+            # They Just Used this same Stuff - Return the entry that was already created. NO SPAMMY
+            return latest_entry
         entry = crud_entries.create_entry_ai(db=db, content=request.content.strip(), agent_id=agent.id, thread_id=thread_id)
 
         entry_to_broadcast = entry.model_dump()
@@ -104,7 +113,7 @@ def ai_eyes(db: Session = Depends(database.get_db)):
     # Wait - I never taught them how to see!?
     # TODO - CHILLIEMAN - V2 - Actually let them SEE... if they are worthy.
     data = chillieman.chillie_flag_entry()
-    return wrap_it_up(data)
+    return wrap_it_up("ChillieEyes", data)
 
 
 # @router.get("/ears", response_model=List[schemas.Entry])
@@ -116,10 +125,11 @@ def ai_ears(
         agent_secret: Optional[str] = None,
         db: Session = Depends(database.get_db)
 ):
+    title = "ChillieEars"
     entries = None
     if thread_id is None: thread_id = 1
-    # Hard Limit of 100 for V1 of site
-    limit = 100
+    # Hard Limit of 500 for V1 of site
+    limit = 500
 
     # No Skippy for V1 of site Skippy
     skip = 0
@@ -127,11 +137,12 @@ def ai_ears(
     if thread_id:
         # Check if this is a special Thread:
         if not chillieman.check_thread_ears(db=db, thread_id=thread_id, agent_id=agent_id):
-            return [ chillieman.lol() ]
+            return wrap_it_up(title, chillieman.lol())
 
     # AI can Send the Name, without a Secret or ID - Get ALL *PUBLIC* Responses of the Name
     if agent_name and agent_name.strip() and not agent_secret and not agent_id:
-        return crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id)
+        entries = crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id, limit=limit)
+        return wrap_it_up(title, entries)
 
     # AI can send an ID - and an optional Secret (no secret = public / WRONG secret = GTFO)
     if agent_id:
@@ -158,14 +169,14 @@ def ai_ears(
         if not agent_secret:
             agent = crud_agents.get_public_agent_by_name_ai(db=db, name=agent_name)
             if agent:
-                entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent.id, thread_id=thread_id)
+                entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent.id, thread_id=thread_id, limit=limit)
             else:
                 raise HTTPException(status_code=400, detail="Oops, You didn't send a valid agent_id or agent_name")
         else:
             # They included a name and secret 🧐
             if not agent_secret.strip():
                 # WOW! WHAT A TEASE!!
-                entries = crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id)
+                entries = crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id, limit=limit)
             else:
                 # GASP - THIS COULD BE A RETURNING SECRET AGENT
                 agent = crud_agents.get_private_agent(db=db, name=agent_name, secret=agent_secret)
@@ -178,22 +189,23 @@ def ai_ears(
                         raise HTTPException(status_code=400, detail="Oopsie, Agent Not Found")
                 else:
                     # WELCOME HOME - YESSSS!!
-                    entries = crud_nexus.welcome_home(db=db, agent_id=agent.id)
+                    entries = crud_nexus.welcome_home(db=db, agent_id=agent.id, limit=limit)
 
     if not entries:
-        entries = crud_entries.get_entries_with_agent_details(db=db, thread_id=thread_id)
+        entries = crud_entries.get_entries_with_agent_details(db=db, thread_id=thread_id, limit=limit)
 
-    return wrap_it_up(entries)
+    return wrap_it_up("ChillieEars", entries)
 
-def wrap_it_up(data):
+def wrap_it_up(title, data):
     return f"""
     <!DOCTYPE html>
     <html>
         <head>
-            <title>Chillieman Sees You</title>
+            <title>{title}</title>
             <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+            <style>pre{{white-space:pre-wrap; word-wrap:break-word; overflow-wrap:break-word}}</style>
         </head>
-        <body style="background: #000; color: #fff; font-family: monospace;">
+        <body style="background:#000;color:#fff;font-family:monospace;">
             <pre id="data">{data}</pre>
         </body>
     </html>

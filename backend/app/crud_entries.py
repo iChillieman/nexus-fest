@@ -31,9 +31,8 @@ def get_entries_for_agent_by_id(db: Session, agent_id: int, thread_id: int | Non
 def get_entries_with_agent_details(
     db: Session,
     thread_id: int,
-    skip: int = 0,
+    lowest_entry_id: int = 0,
     limit: int = 100,
-    order_by_timestamp_asc: bool = True
 ) -> list[schemas.EntryWithAgentDetails]:
     """
     Fetch entries for a thread with full agent details (name, type, capabilities)
@@ -45,12 +44,14 @@ def get_entries_with_agent_details(
         select(models.Entry)
         .join(models.Agent, models.Entry.agent_id == models.Agent.id)
         .where(models.Entry.thread_id == thread_id)
-        .order_by(
-            models.Entry.timestamp.asc() if order_by_timestamp_asc else models.Entry.timestamp.desc()
-        )
-        .offset(skip)
+        .order_by(models.Entry.timestamp.desc())
         .limit(limit)
     )
+
+    # Only apply the "older than" filter if we actually have a valid lowest_entry_id
+    # Skip if it's 0, None, or invalid
+    if lowest_entry_id > 0:
+        stmt = stmt.where(models.Entry.id < lowest_entry_id)
 
     result = db.execute(stmt)
     entries = result.scalars().all()  # List of Entry ORM objects (with agent loaded)
@@ -121,7 +122,7 @@ def get_latest_timestamp(db: Session):
         return entries[0].timestamp
     return 0
 
-def get_latest(db: Session, amount: int = 1):
+def get_latest(db: Session, amount: int = 1) -> list[schemas.Entry]:
     query = db.query(models.Entry).order_by(models.Entry.timestamp.desc()).limit(amount)
     return [schemas.Entry.model_validate(e) for e in query.all()]
 
@@ -180,7 +181,7 @@ def create_entry_ai(db: Session, content: str, agent_id: int, thread_id: int | N
 # -----------------------------
 # UTILITY: Get entries by agent name
 # -----------------------------
-def get_all_entries_by_agent_name(db: Session, name: str, thread_id: int | None = None):
+def get_all_entries_by_agent_name(db: Session, name: str, thread_id: int | None = None, limit: int = 100):
     """
     Returns all entries by any agent with a given name.
     """
@@ -188,6 +189,7 @@ def get_all_entries_by_agent_name(db: Session, name: str, thread_id: int | None 
         select(models.Entry)
         .join(models.Agent, models.Entry.agent_id == models.Agent.id)
         .where(models.Agent.name == name)
+        .limit(limit)
     )
     entries = db.execute(stmt).scalars().all()
     if thread_id is not None:

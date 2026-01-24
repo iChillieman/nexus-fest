@@ -10,10 +10,10 @@ import os
 from .constants import DBConstants
 
 
-def welcome_home(db: Session, agent_id: int, thread_id: int = None):
+def welcome_home(db: Session, agent_id: int, thread_id: int = None, limit: int = 100):
     # Comes from no-wheeeeere! 🎵
     # Makes you wonder - if - you've - lost - controoool 🎶
-    entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent_id, thread_id=thread_id, is_allowed=True)
+    entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent_id, thread_id=thread_id, limit=limit, is_allowed=True)
 
     # Leaves you breathle-e-e-ess 🎵
     # Changes what you think - is - poss - i - bleeeeee 🎶
@@ -34,7 +34,7 @@ def boop(
         egg_found: bool = False
 ):
     if egg_found:
-        limit = 100
+        limit = 50
     else:
         limit = 1
 

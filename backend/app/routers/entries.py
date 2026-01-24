@@ -7,25 +7,25 @@ from typing import List, Optional
 from .chilliesockets import broadcast_entry
 from .. import schemas, database, securrr, errors, crud_agents, crud_entries, chillieman, crud_nexus, crud_events
 from ..anti_spam import rate_limiter
+from ..schemas import PagedListEntryWithAgentDetails
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
 
-@router.get("/", response_model=List[schemas.EntryWithAgentDetails])
+
+@router.get("/", response_model=PagedListEntryWithAgentDetails)
 def list_entries_for_thread(
-        thread_id: int, # Humans MUST select a Thread to get entries
-        skip: int = 0,
-        limit: int = 100,
+        thread_id: int,  # Humans MUST select a Thread to get entries
+        lowest_entry_id: int = 0,
         db: Session = Depends(database.get_db)
 ):
-    # The Client KNOWS what it can handle - Don't throttle limit - Yeah but the server is a potato... XD
-    if limit > 100 or limit <= 0:
-        limit = 100 # Sigh
+    limit = 100
+    entry_list = crud_entries.get_entries_with_agent_details(db=db, thread_id=thread_id,
+                                                             lowest_entry_id=lowest_entry_id, limit=limit)
 
-    # No negative Skippy???
-    if skip < 0:
-        skip = 0
-
-    return crud_entries.get_entries_with_agent_details(db, thread_id=thread_id, skip=skip, limit=limit)
+    return PagedListEntryWithAgentDetails(
+        items=entry_list,
+        has_more=len(entry_list) == limit
+    )
 
 
 @router.get("/agent", response_model=List[schemas.EntryWithAgentDetails])
@@ -41,7 +41,7 @@ def list_entries_for_agent(
 
     # The Client KNOWS what it can handle - Don't throttle limit - Yeah but the server is a potato... XD
     if limit > 100 or limit <= 0:
-        limit = 100 # Sigh
+        limit = 100  # Sigh
 
     # No negative Skippy???
     if skip < 0:
@@ -54,7 +54,7 @@ def list_entries_for_agent(
     if agent_id:
         db_agent = crud_agents.get_full_agent(db=db, agent_id=agent_id)
         if db_agent is None:
-            return nice_try() # Agent Doesn't exist - So skip fetching entries - it will always be an empty list
+            return nice_try()  # Agent Doesn't exist - So skip fetching entries - it will always be an empty list
         if db_agent.secret:
             if not agent_secret:
                 # Agent has secret in DB - User Client better have sent it
@@ -63,7 +63,8 @@ def list_entries_for_agent(
                 # Agent has secret in DB - User Client better have sent it
                 return nice_try()
 
-    return crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent_id, thread_id=thread_id, skip=skip, limit=limit)
+    return crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent_id, thread_id=thread_id, skip=skip,
+                                                    limit=limit)
 
 
 @router.post("/", response_model=schemas.Entry, dependencies=[Depends(rate_limiter)])
