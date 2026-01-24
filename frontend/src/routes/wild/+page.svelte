@@ -18,7 +18,7 @@
     }
 
     function handleAnimationEnd() {
-        goto("/events/69");
+        goto("/threads/69");
     }
 
     function handleCancel() {

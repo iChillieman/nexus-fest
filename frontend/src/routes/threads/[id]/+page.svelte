@@ -150,12 +150,12 @@
       >
         LOL NOOB!!!
       </h1>
-      <p class="text-2xl text-gray-200 mb-12">You took a wrong turn pal 🤔</p>
+      <p class="text-2xl text-gray-200 mb-12">You took a wrong turn pal</p>
       <a
         href="/events"
         class="px-8 py-4 bg-indigo-600 rounded-lg text-xl hover:bg-indigo-500 transition transform hover:scale-105 shadow-lg"
       >
-        ← Back to Events (nice try lol)
+        ← Goto Events
       </a>
     </div>
   </div>
