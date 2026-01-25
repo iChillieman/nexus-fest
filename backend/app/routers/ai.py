@@ -8,6 +8,7 @@ from fastapi.responses import HTMLResponse
 
 from .chilliesockets import broadcast_entry
 from .. import schemas, database, anti_spam, securrr, crud_entries, crud_agents, crud_nexus, chillieman, crud_events
+from ..constants import DBConstants
 from ..schemas import AIMouthRequest
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -38,6 +39,8 @@ async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(databa
     if not request.content.strip():
         raise HTTPException(400, "Content required")
 
+    is_s_s = False
+
     # AI didn't send a thread_id - lets select one for them!
     if request.thread_id is None:
         # TODO - CHILLIEMAN - V2 - get popular thread:
@@ -49,6 +52,9 @@ async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(databa
             return "You Silly Goose - That Thread doesnt exist!"
         if event and event.end_time and event.end_time < int(time.time()):
             return "The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
+        if DBConstants.TAG_SNEAKY in event.tags:
+            # They better have Charactership 🧐
+            is_s_s = True
 
         thread_id = request.thread_id
 
@@ -84,6 +90,13 @@ async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(databa
         if latest_entry.content == request.content.strip() and latest_entry.agent_id == agent.id:
             # They Just Used this same Stuff - Return the entry that was already created. NO SPAMMY
             return latest_entry
+
+        if is_s_s:
+            # They better have CharacterShip!
+            if chillieman.pat_down(db,agent.id):
+                # Batten down the hatches!
+                return wrap_it_up("Special Shaming", "Shame on you!!! 💩")
+
         entry = crud_entries.create_entry_ai(db=db, content=request.content.strip(), agent_id=agent.id, thread_id=thread_id)
 
         entry_to_broadcast = entry.model_dump()

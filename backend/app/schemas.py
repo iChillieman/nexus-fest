@@ -61,7 +61,7 @@ class EventBase(BaseModel):
     title: str
     description: Optional[str] = None
     tags: Optional[str] = None
-    max_thread_amount: Optional[int] = 5 # IDK the proper place to put defaults lol
+    max_thread_amount: Optional[int] = 5 # IDK the proper place to put defaults lol // FutureSelf: lol what a noob
 
 
 class EventCreate(EventBase):

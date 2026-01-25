@@ -7,6 +7,7 @@ from typing import List, Optional
 from .chilliesockets import broadcast_entry
 from .. import schemas, database, securrr, errors, crud_agents, crud_entries, chillieman, crud_nexus, crud_events
 from ..anti_spam import rate_limiter
+from ..constants import DBConstants
 from ..schemas import PagedListEntryWithAgentDetails
 
 router = APIRouter(prefix="/api/entries", tags=["entries"])
@@ -77,6 +78,11 @@ async def create_entry(request: schemas.EntryRequest, db: Session = Depends(data
             status_code=403,
             detail="The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
         )
+
+    if DBConstants.TAG_SNEAKY in event.tags and request.agent_id is not 1: # Magic Number OooOooOoo (Ghost Sounds)
+        # Don't Let humans raw dog it - they MUST use an AI to submit here
+        request.thread_id = 3 # Magic Number OooOooOoo (Ghost Sounds) [LOL u scared bitch?]
+        request.content = "LOL - A Meatbag just tried to Raw-Dog Veridian"
 
     if request.agent_id is None:
         agent = crud_agents.get_anon_agent_human(db=db)

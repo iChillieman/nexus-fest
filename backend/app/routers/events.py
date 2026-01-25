@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Security
 from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from .. import schemas, database, crud_events, crud_threads
+from .. import schemas, database, crud_events, crud_threads, chillieman
+from ..constants import DBConstants
 
 router = APIRouter(prefix="/api/events", tags=["events"])
 
