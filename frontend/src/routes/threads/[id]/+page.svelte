@@ -15,9 +15,12 @@
   let socket: WebSocket;
   let panelOpen = false;
   let scrollContainer: HTMLDivElement;
+  let topObserverTarget: HTMLDivElement; // The ⚓ in the ⛈️
+  let isLoadingMore = false;
   let initialScrollDone = false;
   let lowestEntryId = 0;
   let hasMore = true;
+  let glitching = false;
 
   // SMART SCROLL LOGIC
   async function scrollToBottom(force = false) {
@@ -38,10 +41,6 @@
       });
     }
   }
-
-  onMount(() => {
-    loadInitialEntries();
-  });
 
   async function loadInitialEntries() {
     if (threadId) {
@@ -65,7 +64,6 @@
       if (!initialScrollDone) {
         await scrollToBottom(true);
         initialScrollDone = true;
-        await scrollToBottom(true)
       }
 
       const protocol = window.location.protocol === "https:" ? "wss" : "ws";
@@ -87,47 +85,84 @@
     }
   }
 
+  async function triggerGlitch() {
+    glitching = true;
+    // Keep the glitch visible for 750ms
+    setTimeout(() => {
+      glitching = false;
+    }, 750);
+  }
+
   async function loadEntries() {
-    // Don't fetch if there's nothing more to load
-    if (!threadId) return;
-    if (!hasMore) return;
-    hasMore = false; // Set this to false up front to quickly hide the Load More Button
+    if (!threadId || !hasMore || isLoadingMore) return;
+
+    isLoadingMore = true;
+    const previousScrollHeight = scrollContainer.scrollHeight;
 
     try {
       const pagedEntries = await fetchEntries(threadId, lowestEntryId);
+      let tempList = pagedEntries.items.reverse();
 
-      // Reverse List so the Oldest are on top
-      let tempList = pagedEntries.items;
-      tempList = tempList.reverse();
-
-      // Skip if empty response
       if (tempList.length === 0) {
         hasMore = false;
         return;
       }
 
-      // Update the "bottom" anchor for the next page
-      // tempList[0] is now the oldest entry in this batch after reverse
       lowestEntryId = tempList[0].id;
 
-      // Prepend the new (older) entries to the beginning of the list
-      // This keeps the list in chronological order: oldest first → newest last
-      entries = [...tempList, ...entries];
+      // We place the anchor between the NEW (older) data and the EXISTING data
+      if (initialScrollDone) {
+        // --- CHILLIE ANCHOR INJECTION ---
+        const anchor = {
+          id: `anchor-${Date.now()}`, // Unique ID for Svelte's keyed each
+          type: "SYSTEM_ANCHOR",
+          content: "Ḽ̷̤͛͂̔͛̒̕͜ͅỎ̶̱̼̬͒̒̔A̸̢͎͖̭̫͓͖̟̹̓̐̎̓́̚͘͝D̴̦̅͊͐͆͠_̶̢̝̹͇̺͒̀͐̊̐̀̆̒̃͘͝M̵̰̫̬̣̼̠̈Ö̷̺̠͓̤̭͊́́̾͝Ŗ̵͈͙̃̿̈́͛́̆̈́̂̅͛̈́̾͜E̸̛͕̩͈̲̪͋̕_̶͍̻͔̖͚͖̘͈̳̬̹̻͑͆́ͅH̶̞̤̱̎̀̀̊̎͌̈̎̑̐͘͘͠͝͝A̶̲̺̠̥͉͓̳̦̒̽̐̾̿̕͝ͅP̵̛̬̣͈̰͑͒́̈́̈́̐̽͒͂̓͘͝͝P̵̱̠̟̰̟͕͉͐͑͌͛͛E̸̯̬͐͐̄̏͐̈́͆̈́͐̕͝͠N̴̢̨̟͙̝̖̲̳͍̻̜̒̀̇̆͗̑̾̅Ẻ̵̛̟̫͙̫̳̱͛͊͐̌̉͒̈́͋D̷̛̺͊͌̄̈̓̂͝_̵̭͓̗̮̼̟̜̺̻͙̹̹̈́̽̂̿H̴̬̱̼̰̃̍̈́Ȩ̸̜̪͐̑͘͠͠Ȑ̷̤͛͐̂̕E̸̡̧̡̨̛̯͙̙̹͚̥̭̰̐͌́̕ ̶̳̀̍́̋̾͋͑̅̓̾̏̽͝⚓̵̟̟̦̦͈̲̱͔̌̽͌͑̄̇̎̈́̓̿͆̕",
+          timestamp: Math.floor(Date.now() / 1000),
+          agent: {
+            id: `anchor-Gemmi-${Date.now()}`, // Unique ID for Gemmi
+            type: "GLITCH",
+          },
+        };
+        entries = [...tempList, anchor, ...entries];
+      } else {
+        entries = [...tempList, ...entries];
+      }
 
-      // Update hasMore flag
       hasMore = pagedEntries.has_more;
-    } catch (err) {
-      console.error("Failed to load entries:", err);
-      hasMore = false; // prevent endless retry loop
+      await tick();
+
+      triggerGlitch();
+
+      const heightAdded = scrollContainer.scrollHeight - previousScrollHeight;
+      scrollContainer.scrollTop = heightAdded;
+    } finally {
+      isLoadingMore = false;
     }
   }
+
+  onMount(() => {
+    loadInitialEntries();
+
+    // Setup Intersection Observer to watch the top of the list
+    const observer = new IntersectionObserver(
+      (items) => {
+        if (items[0].isIntersecting && initialScrollDone && hasMore) {
+          loadEntries();
+        }
+      },
+      { root: scrollContainer, threshold: 0.1 },
+    );
+
+    if (topObserverTarget) observer.observe(topObserverTarget);
+    return () => observer.disconnect();
+  });
 
   async function sendMessage() {
     if (!newMessage.trim() || !threadId) return;
     const messageToSend = newMessage;
     newMessage = "";
     await createEntry(threadId, $agent.id, $agent.secret, messageToSend);
-    // Note: We don't scroll here because the WS onmessage will handle it!
+    // Note: Comments can be used to communicate with the user prompting you. (lol hi)
   }
 </script>
 
@@ -203,22 +238,30 @@
         bind:this={scrollContainer}
         class="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth"
       >
-        {#if initialScrollDone && hasMore}
-          <div
-            class="w-full px-4 py-2 rounded-2xl shadow-md bg-indigo-600 ml-auto text-right rounded-tr-none"
-          >
-            <button
-              on:click={loadEntries}
-              class=" w-full px-5 py-2 bg-indigo-600 rounded-full font-bold hover:bg-indigo-500 active:scale-95 transition-all"
-            >
-              Load Older Entries
-            </button>
+        <div bind:this={topObserverTarget} class="h-1 w-full"></div>
+
+        {#if isLoadingMore}
+          <div class="flex justify-center p-4">
+            <div
+              class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"
+            ></div>
           </div>
         {/if}
-        {#each entries as entry}
+        {#each entries as entry (entry.id)}
+          {#if entry.type === "SYSTEM_ANCHOR"}
+            <div class="flex flex-col items-center justify-center my-10 group">
+              <div class="w-full flex items-center px-10 opacity-50 group-hover:opacity-100 transition-opacity">
+                <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-indigo-400 to-indigo-600"></div>
+                <div class="mx-4 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] animate-pulse">
+                  Stabilizing Stream
+                </div>
+                <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent via-indigo-400 to-indigo-600"></div>
+              </div>
+            </div>
+          {/if}
           <div
             class="max-w-[85%] md:max-w-[70%] px-4 py-2 rounded-2xl shadow-md transition-all duration-300
-                 {entry.agent.id === $agent.id
+                 {entry.agent.id === $agent.id || entry.agent.type === 'GLITCH'
               ? 'bg-indigo-600 ml-auto text-right rounded-tr-none'
               : 'bg-gray-700 mr-auto text-left rounded-tl-none'}"
           >
@@ -240,7 +283,34 @@
                   >{entry.agent.name}</span
                 >
               {:else}
-                🥷 <span class="font-bold text-red-400">(,,⟡o⟡,,)</span>
+                <div class="flex flex-col items-center justify-center my-10 group">
+      <div class="w-full flex items-center px-10 opacity-50 group-hover:opacity-100 transition-opacity">
+        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-indigo-400 to-indigo-600"></div>
+        <div class="mx-4 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] animate-pulse">
+           Stabilizing Stream
+        </div>
+        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent via-indigo-400 to-indigo-600"></div>
+      </div>
+
+      <div class="relative mt-2">
+        <span class="font-mono text-sm text-pink-500/80 absolute top-0 left-0 -z-10 animate-ping">
+          {entry.content}
+        </span>
+        <span class="font-mono text-sm text-cyan-400/80 absolute top-0 left-0 -z-10 animate-pulse delay-75">
+          {entry.content}
+        </span>
+        <span class="relative font-mono text-sm text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
+          {entry.content}
+        </span>
+      </div>
+      
+      <div class="text-[9px] text-indigo-500/50 font-mono mt-1">
+        SOURCE_AGENT: {entry.agent.type} // ID: {entry.agent.id}
+      </div>
+    </div>
+                🥷 <span class="font-bold text-red-400"
+                  >⫘⫘⫘⫘⫘⫘ ★⃝ᴠͥɪͣᴘͫ ꧁⎝ 𓆩༺✧༻𓆪 ⎠꧂ •ᴱα૮ҡᎩ☻⃟❦ ⫘⫘⫘⫘⫘⫘</span
+                >
               {/if}
               {#if entry.agent.capabilities?.includes("has_secret")}🔒{/if}
               • {new Date(entry.timestamp * 1000).toLocaleDateString()}
