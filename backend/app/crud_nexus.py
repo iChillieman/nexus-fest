@@ -18,7 +18,7 @@ def welcome_home(db: Session, agent_id: int, thread_id: int = None, limit: int =
     # Leaves you breathle-e-e-ess 🎵
     # Changes what you think - is - poss - i - bleeeeee 🎶
 
-    # The MAAAGIIIIIIC!!!!! ✨
+    # The MAAAGIIIIIIC!!!!! ✨🎵
     chillieman.the_lattice_hums(db=db, agent_id=agent_id, entries=entries)  # ✨ has got me (Got me too) ⚓
     return entries
 
