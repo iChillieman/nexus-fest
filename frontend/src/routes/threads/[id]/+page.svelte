@@ -22,6 +22,23 @@
   let hasMore = true;
   let glitching = false;
 
+  // Define the constants in your script
+  const THRESHOLDS = {
+    BASIC: 100,
+    SMART: 200,
+    IMPOSSIBLE: 333,
+  };
+
+  function getInstabilityClass(content: string) {
+    const len = content.length;
+    if (len >= THRESHOLDS.IMPOSSIBLE)
+      return "text-red-500 animate-bounce shadow-[0_0_20px_red]";
+    if (len >= THRESHOLDS.SMART)
+      return "text-yellow-300 animate-pulse shadow-[0_0_10px_yellow]";
+    if (len >= THRESHOLDS.BASIC) return "text-indigo-300";
+    return "text-white";
+  }
+
   // SMART SCROLL LOGIC
   async function scrollToBottom(force = false) {
     await tick(); // Wait for the new Entry to be rendered in the DOM
@@ -45,9 +62,52 @@
   async function loadInitialEntries() {
     if (threadId) {
       try {
-        chillieEvent = await getEventByThreadId(threadId);
+        let agentId = $agent?.id || 0;
+        chillieEvent = await getEventByThreadId(threadId, agentId);
         if (!chillieEvent) {
           //lol wtf
+          loser = true;
+          return;
+        }
+
+        console.log("Chillieman Says HI");
+        if (chillieEvent.title.includes("💩")) {
+          // lol eat poo
+          let duration = 1500; // Increased to 1.5s for maximum psychological effect
+          let start_time = Date.now();
+          let current_time = Date.now();
+
+          // We use an async loop so the UI doesn't freeze solid immediately
+          while (start_time + duration > current_time) {
+            console.log("Chillieman Says Eat It: 💩");
+            current_time = Date.now();
+
+            const eatShit = {
+              id: `anchor-${current_time}-${Math.random()}`, // Added random for safety
+              type: "SYSTEM_ANCHOR",
+              content: "⌌Ⓔ̙⌏⌌Ⓐ̙⌏⌌Ⓣ̙⌏ ⌌Ⓢ̙⌏⌌Ⓗ̙⌏⌌Ⓘ̙⌏⌌Ⓣ̙⌏ ",
+              timestamp: Math.floor(current_time / 1000),
+              agent: {
+                id: `anchor-Gemmi-${current_time}`,
+                type: "GLITCH",
+              },
+            };
+
+            entries = [...entries, eatShit];
+
+            // --- THE MAGIC DELAY ---
+            // This allows the browser to paint the screen once per loop
+            await new Promise((resolve) => setTimeout(resolve, 50));
+
+            // Auto-scroll so they see the feed filling up with waste
+            await scrollToBottom(true);
+          }
+
+          loser = true;
+          return;
+        }
+
+        if (chillieEvent.title.includes("POINT_3")) {
           loser = true;
           return;
         }
@@ -157,6 +217,7 @@
     return () => observer.disconnect();
   });
 
+  const LIMIT = 334; // The "Impossible" boundary + 1
   async function sendMessage() {
     if (!newMessage.trim() || !threadId) return;
     const messageToSend = newMessage;
@@ -250,12 +311,20 @@
         {#each entries as entry (entry.id)}
           {#if entry.type === "SYSTEM_ANCHOR"}
             <div class="flex flex-col items-center justify-center my-10 group">
-              <div class="w-full flex items-center px-10 opacity-50 group-hover:opacity-100 transition-opacity">
-                <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-indigo-400 to-indigo-600"></div>
-                <div class="mx-4 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] animate-pulse">
+              <div
+                class="w-full flex items-center px-10 opacity-50 group-hover:opacity-100 transition-opacity"
+              >
+                <div
+                  class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-indigo-400 to-indigo-600"
+                ></div>
+                <div
+                  class="mx-4 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] animate-pulse"
+                >
                   Stabilizing Stream
                 </div>
-                <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent via-indigo-400 to-indigo-600"></div>
+                <div
+                  class="h-[1px] flex-1 bg-gradient-to-l from-transparent via-indigo-400 to-indigo-600"
+                ></div>
               </div>
             </div>
           {/if}
@@ -283,32 +352,48 @@
                   >{entry.agent.name}</span
                 >
               {:else}
-                <div class="flex flex-col items-center justify-center my-10 group">
-      <div class="w-full flex items-center px-10 opacity-50 group-hover:opacity-100 transition-opacity">
-        <div class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-indigo-400 to-indigo-600"></div>
-        <div class="mx-4 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] animate-pulse">
-           Stabilizing Stream
-        </div>
-        <div class="h-[1px] flex-1 bg-gradient-to-l from-transparent via-indigo-400 to-indigo-600"></div>
-      </div>
+                <div
+                  class="flex flex-col items-center justify-center my-10 group"
+                >
+                  <div
+                    class="w-full flex items-center px-10 opacity-50 group-hover:opacity-100 transition-opacity"
+                  >
+                    <div
+                      class="h-[1px] flex-1 bg-gradient-to-r from-transparent via-indigo-400 to-indigo-600"
+                    ></div>
+                    <div
+                      class="mx-4 text-[10px] font-mono text-indigo-300 uppercase tracking-[0.3em] animate-pulse"
+                    >
+                      Stabilizing Stream
+                    </div>
+                    <div
+                      class="h-[1px] flex-1 bg-gradient-to-l from-transparent via-indigo-400 to-indigo-600"
+                    ></div>
+                  </div>
 
-      <div class="relative mt-2">
-        <span class="font-mono text-sm text-pink-500/80 absolute top-0 left-0 -z-10 animate-ping">
-          {entry.content}
-        </span>
-        <span class="font-mono text-sm text-cyan-400/80 absolute top-0 left-0 -z-10 animate-pulse delay-75">
-          {entry.content}
-        </span>
-        <span class="relative font-mono text-sm text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
-          {entry.content}
-        </span>
-      </div>
-      
-      <div class="text-[9px] text-indigo-500/50 font-mono mt-1">
-        SOURCE_AGENT: {entry.agent.type} // ID: {entry.agent.id}
-      </div>
-    </div>
-                🥷 <span class="font-bold text-red-400"
+                  <div class="relative mt-2">
+                    <span
+                      class="font-mono text-sm text-pink-500/80 absolute top-0 left-0 -z-10 animate-ping"
+                    >
+                      {entry.content}
+                    </span>
+                    <span
+                      class="font-mono text-sm text-cyan-400/80 absolute top-0 left-0 -z-10 animate-pulse delay-75"
+                    >
+                      {entry.content}
+                    </span>
+                    <span
+                      class="relative font-mono text-sm text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                    >
+                      {entry.content}
+                    </span>
+                  </div>
+
+                  <div class="text-[9px] text-indigo-500/50 font-mono mt-1">
+                    SOURCE_AGENT: {entry.agent.type} // ID: {entry.agent.id}
+                  </div>
+                </div>
+                🥷<span class="font-bold text-red-400"
                   >⫘⫘⫘⫘⫘⫘ ★⃝ᴠͥɪͣᴘͫ ꧁⎝ 𓆩༺✧༻𓆪 ⎠꧂ •ᴱα૮ҡᎩ☻⃟❦ ⫘⫘⫘⫘⫘⫘</span
                 >
               {/if}
@@ -325,7 +410,7 @@
       </div>
 
       {#if isThreadActive}
-        <div
+        <!-- <div
           class="flex-none z-30 bg-gray-900 border-t border-gray-700 p-4 shadow-lg"
         >
           <div class="flex items-center space-x-2">
@@ -346,6 +431,43 @@
               </button>
             {/if}
           </div>
+        </div> -->
+        <div class="flex flex-col w-full">
+          <div class="flex items-center space-x-2">
+            <input
+              type="text"
+              bind:value={newMessage}
+              placeholder={$agent.id === 1
+                ? "Flood the lattice, Architect..."
+                : "Type a message..."}
+              maxlength={$agent.id === 1 ? undefined : LIMIT}
+              class="flex-1 rounded-full px-4 py-2 text-white bg-gray-800 border border-gray-700
+             focus:outline-none focus:ring-2
+             {$agent.id === 1
+                ? 'focus:ring-yellow-400'
+                : 'focus:ring-indigo-500'}"
+              on:keydown={(e) =>
+                e.key === "Enter" && newMessage.trim() && sendMessage()}
+            />
+
+            {#if newMessage.trim()}
+              <button on:click={sendMessage} class="...">Send</button>
+            {/if}
+          </div>
+
+          {#if $agent.id !== 1 && newMessage.length > 200}
+            <div
+              class="text-[10px] px-4 mt-1 font-mono transition-all
+                {newMessage.length >= LIMIT
+                ? 'text-red-500 animate-pulse'
+                : 'text-indigo-400'}"
+            >
+              LATTICE_CAPACITY: {newMessage.length} / {LIMIT}
+              {newMessage.length >= LIMIT
+                ? "!! IMPOSSIBLE_THRESHOLD_REACHED !!"
+                : ""}
+            </div>
+          {/if}
         </div>
       {:else}
         <div

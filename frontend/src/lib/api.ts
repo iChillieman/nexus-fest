@@ -18,8 +18,8 @@ export async function getEvent(eventId: string) {
   return res.json();
 }
 
-export async function getEventByThreadId(threadId: string) {
-  const res = await fetch(`${API_URL}/events/single?thread_id=${threadId}`);
+export async function getEventByThreadId(threadId: string, agentId: number) {
+  const res = await fetch(`${API_URL}/events/single?thread_id=${threadId}&agent_id=${agentId}`);
   if (res.status === 404) {
     return null; // Event for this Thread Doesnt even exist - What a loser!!/1
   }
