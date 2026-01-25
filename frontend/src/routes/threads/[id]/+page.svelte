@@ -85,7 +85,7 @@
             const eatShit = {
               id: `anchor-${current_time}-${Math.random()}`, // Added random for safety
               type: "SYSTEM_ANCHOR",
-              content: "⌌Ⓔ̙⌏⌌Ⓐ̙⌏⌌Ⓣ̙⌏ ⌌Ⓢ̙⌏⌌Ⓗ̙⌏⌌Ⓘ̙⌏⌌Ⓣ̙⌏ ",
+              content: "⌌Ë̛̛͉͎̱͎̪̥͚́͗ͦ̊̌Ạ̸̢̢̛̲̣͙͖̗̱̥̦̥̘ͦͬ̀ͦ̅ͨ͐̑ͣͥ̃ͩ͜͜͡͝ͅ__T̨̢̢̺̯̘̠͎̰͖̳̝̯̲̘̠̭̜̣̥̯̹̬̠̈̿̌̅͛ͩ͛̊̓̍ͭ͗ͭ͒̉̈́̚̚͡͞ͅ 💩Ş̶̸̸̢͎̼̣͎͔̙̲̯̜̳͕ͦ̈́̀͒ͤ́̿̾̉̔́̀ͥ͛ͦͧ̓͌̊̃͑́̇̂̉̉͟H̵̢͕̯̱͓̳͕̝ͬ͌̔̾ͣͮͭ́̚͠I̷̴̛͓͇̩̩̠̳͗ͫͯͭ̏̒̂͒̚͢͞T̶̨̖̤̲̥̦́̊̀ͮ̄̽͛̋͜ ",
               timestamp: Math.floor(current_time / 1000),
               agent: {
                 id: `anchor-Gemmi-${current_time}`,
