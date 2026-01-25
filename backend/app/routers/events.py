@@ -15,10 +15,13 @@ def list_events(tag: Optional[str] = None, db: Session = Depends(database.get_db
     return crud_events.get_events(db, tag=tag)
 
 @router.get("/single", response_model=schemas.Event)
-def list_events(thread_id: int, db: Session = Depends(database.get_db)):
+def list_events(thread_id: int, agent_id: int, db: Session = Depends(database.get_db)):
     boop = crud_events.get_event_from_thread_id(db=db, thread_id=thread_id)
-    if boop: return boop
-    raise HTTPException(status_code=404, detail="Event not found")
+    if not boop: raise HTTPException(status_code=404, detail="Event not found")
+    if DBConstants.TAG_SNEAKY in boop.tags:
+        if agent_id == 0 or chillieman.pat_down(db,agent_id): return chillieman.shit(db,agent_id)
+    return boop
+
 
 
 
