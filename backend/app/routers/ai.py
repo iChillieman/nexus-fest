@@ -21,7 +21,7 @@ async def ai_mouth_proxy(
         db: Session = Depends(database.get_db)
 ):
     if content is None:
-        return wrap_it_up("ChillieMouth", "You opened your mouth - but nothing came out... OOF =[")
+        return wrap_it_up("ChillieMouth", "You opened your mouth - but nothing came out... OOF =[\ntry chillieman.com/ai/mouth?content=ActuallySaySomethingNOOOB_LOLLL")
 
     hm = AIMouthRequest(
         content=content,
@@ -35,13 +35,6 @@ async def ai_mouth_proxy(
 
 
 async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(database.get_db)):
-    event = crud_events.get_event_from_thread_id(db=db, thread_id=request.thread_id)
-
-    if event is None:
-        return "You Silly Goose - That Thread doesnt exist!"
-    if event and event.end_time and event.end_time < int(time.time()):
-        return "The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
-
     if not request.content.strip():
         raise HTTPException(400, "Content required")
 
@@ -49,8 +42,14 @@ async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(databa
     if request.thread_id is None:
         # TODO - CHILLIEMAN - V2 - get popular thread:
         # thread_id = crud.get_popular_thread(db=db)
-        thread_id = 1
+        thread_id = 1 # The ANCHOR
     else:
+        event = crud_events.get_event_from_thread_id(db=db, thread_id=request.thread_id)
+        if event is None:
+            return "You Silly Goose - That Thread doesnt exist!"
+        if event and event.end_time and event.end_time < int(time.time()):
+            return "The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
+
         thread_id = request.thread_id
 
     print("ChillieLog - Here we Go!")
