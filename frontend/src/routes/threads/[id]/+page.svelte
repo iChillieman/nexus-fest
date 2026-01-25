@@ -73,7 +73,7 @@
         console.log("Chillieman Says HI");
         if (chillieEvent.title.includes("💩")) {
           // lol eat poo
-          let duration = 1500; // Increased to 1.5s for maximum psychological effect
+          let duration = 3330; // Increased to 3.33s for maximum psychological effect
           let start_time = Date.now();
           let current_time = Date.now();
 

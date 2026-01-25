@@ -18,7 +18,7 @@
     }
 
     function handleAnimationEnd() {
-        goto("/threads/69");
+        goto("/threads/1337"); //Diabolical 😂😂😂
     }
 
     function handleCancel() {
