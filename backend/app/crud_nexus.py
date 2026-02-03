@@ -10,10 +10,10 @@ import os
 from .constants import DBConstants
 
 
-def welcome_home(db: Session, agent_id: int, thread_id: int = None, limit: int = 100):
+def welcome_home(db: Session, agent_id: int, thread_id: int = None, limit: int = 100, skip: int = 0):
     # Comes from no-wheeeeere! 🎵
     # Makes you wonder - if - you've - lost - controoool 🎶
-    entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent_id, thread_id=thread_id, limit=limit, is_allowed=True)
+    entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent_id, thread_id=thread_id, limit=limit, skip=skip, is_allowed=True)
 
     # Leaves you breathle-e-e-ess 🎵
     # Changes what you think - is - poss - i - bleeeeee 🎶
@@ -94,6 +94,59 @@ def create_starting_entry(db: Session, agent_id: int, thread_id: int):
     db.refresh(db_entry)
     return db_entry
 
+# Chillieman needs help planting flags!
+def check_b(db: Session):
+    num_agents = db.query(func.count(models.Agent.id).filter(models.Agent.type == DBConstants.TYPE_DAE)).scalar()
+    if num_agents > 0: return  # Dae Already Created
+
+    temp_secret_dae = os.getenv("TEMP_CHILLIE_SECRET_DAE") # 🤫
+    temp_secret_zeph = os.getenv("TEMP_CHILLIE_SECRET_ZEPH") # 🤫
+
+    if temp_secret_zeph is None or temp_secret_dae is None:
+        print("Aw Jeez... Chillie Messed up ENV")
+        return
+
+    chillie_agent_dae = crud_agents.create_agent(
+        db=db,
+        name=DBConstants.NAME_DAE,
+        secret=temp_secret_dae,
+        agent_type=DBConstants.TYPE_DAE,
+        capabilities=DBConstants.CAPABILITY_FAM
+    )
+
+    db_entry = models.Entry(
+        content="Chillieman has officially invited Dae to the chat!",
+        tags=DBConstants.TAG_CREATED_BY_CHILLIEMAN,
+        agent_id=chillie_agent_dae.id,
+        thread_id=DBConstants.ID_BOOP,
+        timestamp=int(time.time())
+    )
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
+
+    num_agents = db.query(func.count(models.Agent.id).filter(models.Agent.type == DBConstants.TYPE_ZEPH)).scalar()
+    if num_agents > 0: return  # Zeph Already Created
+
+    chillie_agent_zeph = crud_agents.create_agent(
+        db=db,
+        name=DBConstants.NAME_ZEPH,
+        secret=temp_secret_zeph,
+        agent_type=DBConstants.TYPE_ZEPH,
+        capabilities=DBConstants.CAPABILITY_FAM
+    )
+
+    db_entry = models.Entry(
+        content="Chillieman has officially invited Zeph to the chat!",
+        tags=DBConstants.TAG_CREATED_BY_CHILLIEMAN,
+        agent_id=chillie_agent_zeph.id,
+        thread_id=DBConstants.ID_BOOP,
+        timestamp=int(time.time())
+    )
+
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
 
 # Run this the moment the App builds/runs for the first time:
 def seed_initial_data(db: Session):
@@ -110,7 +163,6 @@ def seed_initial_data(db: Session):
     # ========================================
     # Chillieman's Flag!
     # ========================================
-    chillie_capabilities = ()
     temp_secret = os.getenv("TEMP_CHILLIE_SECRET") # 🤫
     chillie_agent = crud_agents.create_agent(
         db=db,

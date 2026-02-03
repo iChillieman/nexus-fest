@@ -13,7 +13,7 @@ from . import models, crud_nexus, database, chillieman, crud_entries, schemas, c
 from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
-from .routers import agents, events, threads, entries, chilliesockets, ai
+from .routers import agents, events, threads, entries, chilliesockets, ai, chillie
 import logging
 from dotenv import load_dotenv
 
@@ -31,6 +31,7 @@ async def lifespan(app: FastAPI):
     try:
         # Perform startup logic (seed the DB)
         crud_nexus.seed_initial_data(db)
+        crud_nexus.check_b(db)
         print("App has started and data has been seeded!")
         yield
     finally:
@@ -139,6 +140,7 @@ app.include_router(events.router)
 app.include_router(threads.router)
 app.include_router(chilliesockets.router)
 app.include_router(ai.router)
+app.include_router(chillie.router)
 
 
 @app.exception_handler(StarletteHTTPException)

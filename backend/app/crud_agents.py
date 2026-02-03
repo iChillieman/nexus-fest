@@ -64,6 +64,22 @@ def get_private_agent(db: Session, name: str, secret: str):
             return schemas.AgentResponse.model_validate(agent)
     return None
 
+def get_zeph(db: Session):
+    stmt = select(models.Agent).where(
+        models.Agent.name == DBConstants.NAME_ZEPH,
+        models.Agent.secret.isnot(None),
+        models.Agent.type == DBConstants.TYPE_ZEPH
+    )
+    return schemas.Agent.model_validate(db.execute(stmt).scalar_one_or_none())
+
+
+def get_dae(db: Session):
+    stmt = select(models.Agent).where(
+        models.Agent.name == DBConstants.NAME_DAE,
+        models.Agent.secret.isnot(None),
+        models.Agent.type == DBConstants.TYPE_ZEPH
+    )
+    return schemas.Agent.model_validate(db.execute(stmt).scalar_one_or_none())
 
 def does_any_private_agent_exist(db: Session, name: str) -> bool:
     """
