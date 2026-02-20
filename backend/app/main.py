@@ -14,6 +14,8 @@ from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
 from .routers import agents, events, threads, entries, chilliesockets, ai
+from .routers.forge import auth as forge_auth_router, projects as forge_projects_router, tasks as forge_tasks_router
+from . import forge_crud
 import logging
 from dotenv import load_dotenv
 
@@ -31,6 +33,7 @@ async def lifespan(app: FastAPI):
     try:
         # Perform startup logic (seed the DB)
         crud_nexus.seed_initial_data(db)
+        forge_crud.seed_forge_statuses(db)
         print("App has started and data has been seeded!")
         yield
     finally:
@@ -139,6 +142,11 @@ app.include_router(events.router)
 app.include_router(threads.router)
 app.include_router(chilliesockets.router)
 app.include_router(ai.router)
+
+# --- The Forge Routers ---
+app.include_router(forge_auth_router.router, prefix="/forge")
+app.include_router(forge_projects_router.router, prefix="/forge")
+app.include_router(forge_tasks_router.router, prefix="/forge")
 
 
 @app.exception_handler(StarletteHTTPException)
