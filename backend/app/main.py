@@ -9,7 +9,7 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from . import models, crud_nexus, database, chillieman, crud_entries, schemas, crud_agents, anti_spam
+from . import models, crud_nexus, database, chillieman, crud_entries, anti_spam
 from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
@@ -146,9 +146,9 @@ app.include_router(ai.router)
 app.include_router(chillie.router)
 
 # --- The Forge Routers ---
-app.include_router(forge_auth_router.router, prefix="/forge")
-app.include_router(forge_projects_router.router, prefix="/forge")
-app.include_router(forge_tasks_router.router, prefix="/forge")
+app.include_router(forge_auth_router.router, prefix="/api/forge")
+app.include_router(forge_projects_router.router, prefix="/api/forge")
+app.include_router(forge_tasks_router.router, prefix="/api/forge")
 
 
 @app.exception_handler(StarletteHTTPException)

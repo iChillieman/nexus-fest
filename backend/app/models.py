@@ -140,5 +140,5 @@ class ForgeTask(Base):
     updated_at = Column(Integer, nullable=False)
     deleted_at = Column(Integer, nullable=True)
 
-    project = relationship("ForgeProject", back_populates=\"tasks\")
+    project = relationship("ForgeProject", back_populates="tasks")
     status = relationship("ForgeStatus", back_populates="tasks")

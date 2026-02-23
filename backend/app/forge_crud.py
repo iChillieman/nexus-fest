@@ -26,19 +26,19 @@ def create_user(db: Session, user: forge_schemas.ForgeUserCreate):
 def get_project(db: Session, project_id: int, user_id: int, include_deleted: bool = False):
     query = db.query(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeProject.deleted_at == None)
+        query = query.filter(models.ForgeProject.deleted_at is not None)
     return query.filter(models.ForgeProject.id == project_id).first()
 
 def get_project_by_name(db: Session, name: str, user_id: int, include_deleted: bool = False):
     query = db.query(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeProject.deleted_at == None)
+        query = query.filter(models.ForgeProject.deleted_at is not None)
     return query.filter(models.ForgeProject.name == name).first()
 
 def get_projects(db: Session, user_id: int, skip: int = 0, limit: int = 100, include_deleted: bool = False):
     query = db.query(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeProject.deleted_at == None)
+        query = query.filter(models.ForgeProject.deleted_at is not None)
     return query.offset(skip).limit(limit).all()
 
 def create_project(db: Session, project: forge_schemas.ForgeProjectCreate, user_id: int):
@@ -87,14 +87,15 @@ def restore_project(db: Session, project_id: int, user_id: int):
 def get_task(db: Session, task_id: int, user_id: int, include_deleted: bool = False):
     query = db.query(models.ForgeTask).join(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeTask.deleted_at == None)
+        query = query.filter(models.ForgeTask.deleted_at is not None)
     return query.filter(models.ForgeTask.id == task_id).first()
 
 def get_tasks_by_project(db: Session, project_id: int, user_id: int, skip: int = 0, limit: int = 100):
     project = get_project(db, project_id, user_id)
     if not project:
         return []
-    return db.query(models.ForgeTask).filter(models.ForgeTask.project_id == project_id, models.ForgeTask.deleted_at == None).offset(skip).limit(limit).all()
+    return db.query(models.ForgeTask).filter(models.ForgeTask.project_id == project_id,
+                                             models.ForgeTask.deleted_at is not None).offset(skip).limit(limit).all()
 
 def create_task(db: Session, task: forge_schemas.ForgeTaskCreate, user_id: int):
     project = get_project(db, task.project_id, user_id)

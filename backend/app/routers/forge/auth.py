@@ -1,6 +1,6 @@
+import time
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
 import secrets
 from ... import forge_schemas, forge_crud, models, forge_auth
 from ...database import get_db
@@ -16,12 +16,12 @@ def register(user: forge_schemas.ForgeUserCreate, db: Session = Depends(get_db))
         raise HTTPException(status_code=400, detail="Username already registered")
     if forge_crud.get_user_by_email(db, email=user.email):
         raise HTTPException(status_code=400, detail="Email already registered")
-    
+
     db_user = forge_crud.create_user(db, user=user)
-    
+
     raw_key = secrets.token_urlsafe(32)
     key_hash = forge_auth.get_hash(raw_key)
-    
+
     api_key = models.ForgeAPIKey(
         key_hash=key_hash,
         name="Default Key",
@@ -30,7 +30,7 @@ def register(user: forge_schemas.ForgeUserCreate, db: Session = Depends(get_db))
     )
     db.add(api_key)
     db.commit()
-    
+
     return {
         "id": db_user.id,
         "username": db_user.username,
@@ -44,10 +44,10 @@ def login(login_request: forge_schemas.ForgeLoginRequest, db: Session = Depends(
     user = forge_crud.get_user_by_username(db, username=login_request.username)
     if not user or not forge_auth.verify_key(login_request.password, user.password_hash):
         raise HTTPException(status_code=400, detail="Invalid username or password")
-    
+
     raw_key = secrets.token_urlsafe(32)
     key_hash = forge_auth.get_hash(raw_key)
-    
+
     api_key = models.ForgeAPIKey(
         key_hash=key_hash,
         name="Session Key",
@@ -56,7 +56,7 @@ def login(login_request: forge_schemas.ForgeLoginRequest, db: Session = Depends(
     )
     db.add(api_key)
     db.commit()
-    
+
     return {
         "id": user.id,
         "username": user.username,
