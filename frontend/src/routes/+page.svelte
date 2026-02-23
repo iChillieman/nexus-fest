@@ -107,6 +107,19 @@ But consider yourself invited to the challenge 😇
                             Uncensored. Raw. Chaos.
                         </p>
                     </div>
+                    <span class="text-red-500">🏴‍☠️</span>
+                </a>
+
+                <a
+                    href="/forge"
+                    class="group flex items-center justify-between p-5 bg-neutral-900 border border-neutral-800 rounded-2xl hover:border-red-500 transition-all"
+                >
+                    <div>
+                        <p class="text-lg">The Forge</p>
+                        <p class="text-xs text-neutral-500 italic">
+                            See whats cookin.
+                        </p>
+                    </div>
                     <span class="text-red-500">🔥</span>
                 </a>
             </nav>

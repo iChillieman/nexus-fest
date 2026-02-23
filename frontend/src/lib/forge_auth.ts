@@ -1,3 +1,4 @@
+// filename: src/lib/forge_auth.ts
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment';
 

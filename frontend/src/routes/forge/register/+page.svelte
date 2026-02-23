@@ -1,3 +1,4 @@
+<!-- filename: src/routes/forge/register/+page.svelte -->
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { forgeUser } from '$lib/forge_auth';
@@ -9,7 +10,7 @@
     let isLoading = false;
     let registeredKey: string | null = null;
 
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/forge';
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
 
     async function handleRegister() {
         isLoading = true;

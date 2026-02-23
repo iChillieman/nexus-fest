@@ -1,3 +1,4 @@
+<!-- filename: src/routes/forge/projects/[id]/+page.svelte -->
 <script lang="ts">
     import { onMount } from 'svelte';
     import { page } from '$app/stores';
@@ -9,7 +10,7 @@
     let isLoading = true;
     let error: string | null = null;
     
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/forge';
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
     const projectId = $page.params.id;
 
     onMount(async () => {
