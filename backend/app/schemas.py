@@ -177,6 +177,14 @@ class AIMouthRequest(BaseModel):
     class Config:
         from_attributes = True
 
+# Admin endpoint:
+class AIAdminMouthRequest(BaseModel):
+    content: str
+    thread_id: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
 # ChillieLogging
 class NexusData(BaseModel):
     id: int

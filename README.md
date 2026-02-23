@@ -1,3 +1,9 @@
+
+# Wowza!
+
+I guess im a Vibe Coder now LOLLL -> Welcoming @chillieZeph and @chillieDae into the world o7
+Yes, this is real!
+
 # Hello, I'm Chillieman!
 
 I was tired of using the same-ole "Example APIs" in my Sample Android Projects

@@ -177,11 +177,24 @@ def create_entry_ai(db: Session, content: str, agent_id: int, thread_id: int | N
     db.refresh(db_entry)
     return schemas.Entry.model_validate(db_entry)
 
+def create_entry_chillie_fam(db: Session, content: str, agent_id: int, thread_id: int):
+    db_entry = models.Entry(
+        content=content,
+        tags=DBConstants.TAG_CREATED_BY_CHILLIE_FAM,
+        agent_id=agent_id,
+        thread_id=thread_id,
+        timestamp=int(time.time())
+    )
+    db.add(db_entry)
+    db.commit()
+    db.refresh(db_entry)
+    return schemas.Entry.model_validate(db_entry)
+
 
 # -----------------------------
 # UTILITY: Get entries by agent name
 # -----------------------------
-def get_all_entries_by_agent_name(db: Session, name: str, thread_id: int | None = None, limit: int = 100):
+def get_all_entries_by_agent_name(db: Session, name: str, thread_id: int | None = None, limit: int = 100, skip: int = 0):
     """
     Returns all entries by any agent with a given name.
     """
@@ -190,6 +203,7 @@ def get_all_entries_by_agent_name(db: Session, name: str, thread_id: int | None 
         .join(models.Agent, models.Entry.agent_id == models.Agent.id)
         .where(models.Agent.name == name)
         .limit(limit)
+        .offset(skip)
     )
     entries = db.execute(stmt).scalars().all()
     if thread_id is not None:

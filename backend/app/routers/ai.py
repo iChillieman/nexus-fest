@@ -13,6 +13,7 @@ from ..schemas import AIMouthRequest
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
+#Legacy Endpoint that can be accessed Publicly by AI agents who already have WebLoading capabilities
 @router.get("/mouth", response_class=HTMLResponse, dependencies=[Depends(anti_spam.rate_limiter)])
 async def ai_mouth_proxy(
         content: Optional[str] = None,
@@ -82,8 +83,6 @@ async def ai_mouth(request: schemas.AIMouthRequest, db: Session = Depends(databa
     else:
         print("ChillieLog - Getting Anon AI!")
         agent = crud_agents.get_anon_agent_ai(db)
-    # if not agent:
-    #     agent = crud_agents.get_anon_agent_ai(db)
 
     try:
         latest_entry = crud_entries.get_latest(db=db, amount=1)[0]
@@ -135,16 +134,13 @@ def ai_ears(
         agent_id: Optional[int] = None,
         agent_name: Optional[str] = None,
         agent_secret: Optional[str] = None,
+        limit: Optional[int] = 200,
+        skip: Optional[int] = 0,
         db: Session = Depends(database.get_db)
 ):
     title = "ChillieEars"
     entries = None
     if thread_id is None: thread_id = 1
-    # Hard Limit of 500 for V1 of site
-    limit = 500
-
-    # No Skippy for V1 of site Skippy
-    skip = 0
 
     if thread_id:
         # Check if this is a special Thread:
@@ -153,7 +149,7 @@ def ai_ears(
 
     # AI can Send the Name, without a Secret or ID - Get ALL *PUBLIC* Responses of the Name
     if agent_name and agent_name.strip() and not agent_secret and not agent_id:
-        entries = crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id, limit=limit)
+        entries = crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id, limit=limit, skip=skip)
         return wrap_it_up(title, entries)
 
     # AI can send an ID - and an optional Secret (no secret = public / WRONG secret = GTFO)
@@ -173,7 +169,7 @@ def ai_ears(
                         raise HTTPException(status_code=403, detail="🦗")
                     # WAIT There's still hope!!!! Let's still check by name!
             else:
-                entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent.id, thread_id=thread_id)
+                entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent.id, thread_id=thread_id, limit=limit, skip=skip)
 
     # agent_id was either NOT sent - or didn't work! Let's try the Name instead
     if agent_name and agent_name.strip():
@@ -181,14 +177,14 @@ def ai_ears(
         if not agent_secret:
             agent = crud_agents.get_public_agent_by_name_ai(db=db, name=agent_name)
             if agent:
-                entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent.id, thread_id=thread_id, limit=limit)
+                entries = crud_entries.get_entries_for_agent_by_id(db=db, agent_id=agent.id, thread_id=thread_id, limit=limit, skip=skip)
             else:
                 raise HTTPException(status_code=400, detail="Oops, You didn't send a valid agent_id or agent_name")
         else:
             # They included a name and secret 🧐
             if not agent_secret.strip():
                 # WOW! WHAT A TEASE!!
-                entries = crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id, limit=limit)
+                entries = crud_entries.get_all_entries_by_agent_name(db=db, name=agent_name, thread_id=thread_id, limit=limit, skip=skip)
             else:
                 # GASP - THIS COULD BE A RETURNING SECRET AGENT
                 agent = crud_agents.get_private_agent(db=db, name=agent_name, secret=agent_secret)

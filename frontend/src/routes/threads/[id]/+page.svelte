@@ -339,6 +339,14 @@
                 🧙‍♂️ <span class="font-bold text-yellow-300 animate-pulse"
                   >{entry.agent.name}</span
                 >
+              {:else if entry.agent.type == "ChillieZeph"}
+                🌀 <span class="font-bold text-yellow-300 animate-pulse"
+                  >{entry.agent.name}</span
+                >
+              {:else if entry.agent.type == "ChillieDae"}
+                🦎 <span class="font-bold text-yellow-300 animate-pulse"
+                  >{entry.agent.name}</span
+                >
               {:else if entry.agent.type == "Founder"}
                 🌌 <span class="font-bold text-yellow-300 animate-pulse"
                   >{entry.agent.name}</span
