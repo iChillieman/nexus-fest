@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import or_
 import time
 from . import models, forge_schemas, forge_auth
 
@@ -26,19 +27,19 @@ def create_user(db: Session, user: forge_schemas.ForgeUserCreate):
 def get_project(db: Session, project_id: int, user_id: int, include_deleted: bool = False):
     query = db.query(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeProject.deleted_at is not None)
+        query = query.filter(models.ForgeProject.deleted_at == None)
     return query.filter(models.ForgeProject.id == project_id).first()
 
 def get_project_by_name(db: Session, name: str, user_id: int, include_deleted: bool = False):
     query = db.query(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeProject.deleted_at is not None)
+        query = query.filter(models.ForgeProject.deleted_at == None)
     return query.filter(models.ForgeProject.name == name).first()
 
 def get_projects(db: Session, user_id: int, skip: int = 0, limit: int = 100, include_deleted: bool = False):
     query = db.query(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeProject.deleted_at is not None)
+        query = query.filter(models.ForgeProject.deleted_at == None)
     return query.offset(skip).limit(limit).all()
 
 def create_project(db: Session, project: forge_schemas.ForgeProjectCreate, user_id: int):
@@ -75,7 +76,12 @@ def delete_project(db: Session, project_id: int, user_id: int):
     return db_project
 
 def restore_project(db: Session, project_id: int, user_id: int):
-    db_project = get_project(db, project_id, user_id, include_deleted=True)
+    # Retrieve even if deleted
+    db_project = db.query(models.ForgeProject).filter(
+        models.ForgeProject.id == project_id,
+        models.ForgeProject.owner_id == user_id
+    ).first()
+    
     if db_project:
         db_project.deleted_at = None
         db.commit()
@@ -87,15 +93,19 @@ def restore_project(db: Session, project_id: int, user_id: int):
 def get_task(db: Session, task_id: int, user_id: int, include_deleted: bool = False):
     query = db.query(models.ForgeTask).join(models.ForgeProject).filter(models.ForgeProject.owner_id == user_id)
     if not include_deleted:
-        query = query.filter(models.ForgeTask.deleted_at is not None)
+        query = query.filter(models.ForgeTask.deleted_at == None)
     return query.filter(models.ForgeTask.id == task_id).first()
 
 def get_tasks_by_project(db: Session, project_id: int, user_id: int, skip: int = 0, limit: int = 100):
+    # Verify ownership via project
     project = get_project(db, project_id, user_id)
     if not project:
         return []
-    return db.query(models.ForgeTask).filter(models.ForgeTask.project_id == project_id,
-                                             models.ForgeTask.deleted_at is not None).offset(skip).limit(limit).all()
+    
+    return db.query(models.ForgeTask).filter(
+        models.ForgeTask.project_id == project_id,
+        models.ForgeTask.deleted_at == None
+    ).offset(skip).limit(limit).all()
 
 def create_task(db: Session, task: forge_schemas.ForgeTaskCreate, user_id: int):
     project = get_project(db, task.project_id, user_id)
@@ -105,6 +115,9 @@ def create_task(db: Session, task: forge_schemas.ForgeTaskCreate, user_id: int):
     db_task = models.ForgeTask(
         title=task.title, 
         description=task.description, 
+        detail=task.detail, # New Field
+        notes=task.notes,   # New Field
+        assigned_worker_id=task.assigned_worker_id, # New Field
         project_id=task.project_id,
         created_at=now,
         updated_at=now
@@ -117,9 +130,11 @@ def create_task(db: Session, task: forge_schemas.ForgeTaskCreate, user_id: int):
 def update_task(db: Session, task_id: int, user_id: int, task_update: forge_schemas.ForgeTaskUpdate):
     db_task = get_task(db, task_id, user_id)
     if db_task:
+        # Filter out unset values
         update_data = task_update.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_task, key, value)
+            
         db_task.updated_at = int(time.time())
         db.commit()
         db.refresh(db_task)
@@ -134,7 +149,12 @@ def delete_task(db: Session, task_id: int, user_id: int):
     return db_task
 
 def restore_task(db: Session, task_id: int, user_id: int):
-    db_task = get_task(db, task_id, user_id, include_deleted=True)
+    # Retrieve even if deleted
+    db_task = db.query(models.ForgeTask).join(models.ForgeProject).filter(
+        models.ForgeTask.id == task_id,
+        models.ForgeProject.owner_id == user_id
+    ).first()
+    
     if db_task:
         db_task.deleted_at = None
         db.commit()
@@ -152,3 +172,18 @@ def seed_forge_statuses(db: Session):
         ]
         db.add_all(statuses)
         db.commit()
+
+# --- Comment CRUD ---
+def create_task_comment(db: Session, task_id: int, content: str, author_type: str, author_id: int):
+    now = int(time.time())
+    comment = models.ForgeTaskComment(
+        task_id=task_id,
+        content=content,
+        author_type=author_type,
+        author_id=author_id,
+        created_at=now
+    )
+    db.add(comment)
+    db.commit()
+    db.refresh(comment)
+    return comment

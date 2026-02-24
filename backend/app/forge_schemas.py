@@ -1,38 +1,36 @@
-from pydantic import BaseModel
-from typing import List, Optional
+# ... (Previous schemas)
 
-# --- Status Schemas ---
-class ForgeStatusBase(BaseModel):
-    name: str
+# --- Comment Schemas ---
+class ForgeTaskCommentBase(BaseModel):
+    content: str
 
-class ForgeStatusRead(ForgeStatusBase):
+class ForgeTaskCommentCreate(ForgeTaskCommentBase):
+    pass
+
+class ForgeTaskCommentRead(ForgeTaskCommentBase):
     id: int
-
-    class Config:
-        from_attributes = True
-
-# --- User & Auth Schemas ---
-class ForgeUserBase(BaseModel):
-    username: str
-
-class ForgeUserCreate(ForgeUserBase):
-    email: str
-    password: str
-
-class ForgeUserRead(ForgeUserBase):
-    id: int
-    email: str
+    task_id: int
+    author_type: str # USER, WORKER
+    author_id: int
     created_at: int
 
     class Config:
         from_attributes = True
 
-class ForgeLoginRequest(BaseModel):
-    username: str
-    password: str
+# --- Worker Schemas ---
+class ForgeWorkerBase(BaseModel):
+    name: str
 
-class ForgeRegisterResponse(ForgeUserRead):
-    api_key: str
+class ForgeWorkerCreate(ForgeWorkerBase):
+    pass
+
+class ForgeWorkerRead(ForgeWorkerBase):
+    id: int
+    user_id: int
+    created_at: int
+    
+    class Config:
+        from_attributes = True
 
 # --- API Key Schemas ---
 class ForgeAPIKeyBase(BaseModel):
@@ -59,6 +57,9 @@ class ForgeAPIKeyResponse(ForgeAPIKeyRead):
 class ForgeTaskBase(BaseModel):
     title: str
     description: Optional[str] = None
+    detail: Optional[str] = None
+    notes: Optional[str] = None
+    assigned_worker_id: Optional[int] = None
 
 class ForgeTaskCreate(ForgeTaskBase):
     project_id: int
@@ -66,7 +67,10 @@ class ForgeTaskCreate(ForgeTaskBase):
 class ForgeTaskUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
+    detail: Optional[str] = None
+    notes: Optional[str] = None
     status_id: Optional[int] = None
+    assigned_worker_id: Optional[int] = None
 
 class ForgeTaskRead(ForgeTaskBase):
     id: int
@@ -76,6 +80,8 @@ class ForgeTaskRead(ForgeTaskBase):
     updated_at: int
     deleted_at: Optional[int] = None
     status: ForgeStatusRead 
+    assigned_worker: Optional[ForgeWorkerRead] = None # Include assigned worker details
+    comments: List[ForgeTaskCommentRead] = [] # Include comments
 
     class Config:
         from_attributes = True

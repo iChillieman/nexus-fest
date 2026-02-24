@@ -14,7 +14,7 @@ from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
 from .routers import agents, events, threads, entries, chilliesockets, ai, chillie
-from .routers.forge import auth as forge_auth_router, projects as forge_projects_router, tasks as forge_tasks_router, sockets as forge_sockets_router
+from .routers.forge import auth as forge_auth_router, projects as forge_projects_router, tasks as forge_tasks_router, sockets as forge_sockets_router, workers as forge_workers_router
 from . import forge_crud
 import logging
 from dotenv import load_dotenv
@@ -150,6 +150,7 @@ app.include_router(forge_auth_router.router, prefix="/api/forge")
 app.include_router(forge_projects_router.router, prefix="/api/forge")
 app.include_router(forge_tasks_router.router, prefix="/api/forge")
 app.include_router(forge_sockets_router.router, prefix="/api/forge")
+app.include_router(forge_workers_router.router, prefix="/api/forge")
 
 
 @app.exception_handler(StarletteHTTPException)
