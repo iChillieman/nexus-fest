@@ -112,9 +112,10 @@ class ForgeAPIKey(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     key_hash = Column(String, index=True, nullable=False)
-    name = Column(String, nullable=True) 
+    name = Column(String, nullable=True) # Used as Label
     user_id = Column(Integer, ForeignKey('forge_users.id'))
     created_at = Column(Integer, nullable=False)
+    expires_at = Column(Integer, nullable=True) # Null = Never expires
 
     user = relationship("ForgeUser", back_populates="api_keys")
 

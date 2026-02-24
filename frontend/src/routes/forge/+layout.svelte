@@ -7,9 +7,8 @@
 
     let { children } = $props();
 
-    function handleLogout() {
-        forgeLogout();
-        goto('/forge/login');
+    async function handleLogout() {
+        await forgeLogout();
     }
 </script>
 

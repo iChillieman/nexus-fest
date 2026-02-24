@@ -1,7 +1,7 @@
 <!-- filename: src/routes/forge/+page.svelte -->
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { forgeUser } from '$lib/forge_auth';
+    import { forgeUser, forgeLogout } from '$lib/forge_auth';
     import { goto } from '$app/navigation';
 
     // This will hold the data fetched from our API
@@ -10,7 +10,7 @@
     let error: string | null = null;
 
     // The API endpoint for our backend.
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/forge';
 
     onMount(async () => {
         // If not logged in, redirect to login
@@ -26,10 +26,9 @@
                 }
             });
             
-            if (response.status === 403) {
+            if (response.status === 403 || response.status === 401) {
                 // Key invalid or expired
-                // We don't auto-logout here to avoid loops, just show error or redirect
-                goto('/forge/login');
+                await forgeLogout();
                 return;
             }
 

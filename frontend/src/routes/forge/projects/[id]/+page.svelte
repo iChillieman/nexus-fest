@@ -2,7 +2,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import { page } from '$app/stores';
-    import { forgeUser } from '$lib/forge_auth';
+    import { forgeUser, forgeLogout } from '$lib/forge_auth';
     import { goto } from '$app/navigation';
 
     let project: any = null;
@@ -30,6 +30,12 @@
             const projectResponse = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
                 headers: { 'X-API-Key': $forgeUser.api_key }
             });
+            
+            if (projectResponse.status === 401) {
+                await forgeLogout();
+                return;
+            }
+            
             if (!projectResponse.ok) throw new Error(`Failed to fetch project: ${projectResponse.statusText}`);
             project = await projectResponse.json();
 
@@ -37,6 +43,12 @@
             const tasksResponse = await fetch(`${API_BASE_URL}/tasks/project/${projectId}`, {
                 headers: { 'X-API-Key': $forgeUser.api_key }
             });
+            
+            if (tasksResponse.status === 401) {
+                await forgeLogout();
+                return;
+            }
+
             if (!tasksResponse.ok) throw new Error(`Failed to fetch tasks: ${tasksResponse.statusText}`);
             tasks = await tasksResponse.json();
 

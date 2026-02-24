@@ -1,3 +1,4 @@
+import time
 from fastapi import Security, HTTPException, Depends
 from fastapi.security.api_key import APIKeyHeader
 from sqlalchemy.orm import Session
@@ -38,8 +39,17 @@ async def get_current_user(
     all_keys = db.query(models.ForgeAPIKey).all()
     for key_record in all_keys:
         if verify_key(header, key_record.key_hash):
+            # Check Expiration
+            if key_record.expires_at and key_record.expires_at < int(time.time()):
+                # Session expired - remove the key
+                db.delete(key_record)
+                db.commit()
+                raise HTTPException(
+                    status_code=HTTP_403_FORBIDDEN, detail="Session expired"
+                )
             return key_record.user
 
     raise HTTPException(
         status_code=HTTP_403_FORBIDDEN, detail="Could not validate credentials"
     )
+

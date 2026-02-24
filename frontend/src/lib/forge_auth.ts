@@ -27,6 +27,33 @@ if (browser) {
     });
 }
 
-export const forgeLogout = () => {
+export const forgeLogout = async () => {
+    // 1. Get current API key from store
+    let user: User | null = null;
+    const unsubscribe = forgeUser.subscribe(u => user = u);
+    unsubscribe();
+
+    // Determine Base URL
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/forge';
+
+    if (user && user.api_key) {
+        try {
+            await fetch(`${API_BASE_URL}/auth/logout`, {
+                method: 'POST',
+                headers: {
+                    'X-API-Key': user.api_key
+                }
+            });
+        } catch (e) {
+            console.error("Logout failed:", e);
+        }
+    }
+    
+    // 2. Clear store (this triggers localStorage clear)
     forgeUser.set(null);
+    
+    // 3. Redirect
+    if (browser) {
+        window.location.href = '/forge/login';
+    }
 };
