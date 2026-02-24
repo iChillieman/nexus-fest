@@ -1,6 +1,6 @@
 <!-- filename: src/routes/forge/projects/[id]/+page.svelte -->
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { page } from '$app/stores';
     import { forgeUser } from '$lib/forge_auth';
     import { goto } from '$app/navigation';
@@ -9,8 +9,13 @@
     let tasks: any[] = [];
     let isLoading = true;
     let error: string | null = null;
+    let socket: WebSocket | null = null;
     
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
+    // Determine Base URLs
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/forge';
+    // Convert HTTP URL to WebSocket URL
+    const WS_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/^http/, 'ws') + '/api/forge';
+    
     const projectId = $page.params.id;
 
     onMount(async () => {
@@ -35,6 +40,9 @@
             if (!tasksResponse.ok) throw new Error(`Failed to fetch tasks: ${tasksResponse.statusText}`);
             tasks = await tasksResponse.json();
 
+            // Connect WebSocket
+            connectWebSocket();
+
         } catch (e: any) {
             error = e.message;
             console.error("Error fetching project details:", e);
@@ -42,6 +50,68 @@
             isLoading = false;
         }
     });
+
+    onDestroy(() => {
+        if (socket) {
+            socket.close();
+        }
+    });
+
+    function connectWebSocket() {
+        const wsUrl = `${WS_BASE_URL}/ws/forge/projects/${projectId}`;
+        console.log("Connecting to WebSocket:", wsUrl);
+        
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+            console.log("Forge WebSocket Connected 🛠️");
+        };
+
+        socket.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                handleSocketMessage(message);
+            } catch (e) {
+                console.error("Error parsing WebSocket message:", e);
+            }
+        };
+
+        socket.onclose = () => {
+            console.log("Forge WebSocket Disconnected");
+            // Optional: Implement reconnection logic here
+        };
+
+        socket.onerror = (err) => {
+            console.error("WebSocket Error:", err);
+        };
+    }
+
+    function handleSocketMessage(message: { type: string, payload: any }) {
+        const { type, payload } = message;
+        console.log("Received Event:", type, payload);
+
+        switch (type) {
+            case 'TASK_CREATED':
+                tasks = [...tasks, payload];
+                break;
+            case 'TASK_UPDATED':
+                tasks = tasks.map(t => t.id === payload.id ? payload : t);
+                break;
+            case 'TASK_DELETED':
+                tasks = tasks.filter(t => t.id !== payload.id);
+                break;
+            case 'TASK_RESTORED':
+                 // Check if it already exists (update) or add it
+                 if (tasks.find(t => t.id === payload.id)) {
+                    tasks = tasks.map(t => t.id === payload.id ? payload : t);
+                 } else {
+                    tasks = [...tasks, payload];
+                 }
+                break;
+            default:
+                console.warn("Unknown event type:", type);
+        }
+    }
 
     function getStatusColor(statusName: string) {
         switch (statusName.toLowerCase()) {
