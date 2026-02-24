@@ -1,6 +1,7 @@
 import time
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
 from sqlalchemy.orm import Session
+from typing import List
 import secrets
 from ... import forge_schemas, forge_crud, models, forge_auth
 from ...database import get_db
@@ -26,7 +27,8 @@ def register(user: forge_schemas.ForgeUserCreate, db: Session = Depends(get_db))
         key_hash=key_hash,
         name="Default Key",
         user_id=db_user.id,
-        created_at=db_user.created_at
+        created_at=db_user.created_at,
+        expires_at=None
     )
     db.add(api_key)
     db.commit()
@@ -92,3 +94,87 @@ def logout(
             
     # Should technically not happen if get_current_user passed, unless race condition or magic.
     return {"message": "Session not found"}
+
+# --- API Key Management Endpoints ---
+
+@router.get("/keys", response_model=List[forge_schemas.ForgeAPIKeyRead])
+def get_api_keys(
+    db: Session = Depends(get_db),
+    current_user: models.ForgeUser = Depends(forge_auth.get_current_user)
+):
+    """List all API keys for the current user."""
+    # current_user.api_keys is a relationship, so it returns a list of ForgeAPIKey objects
+    return current_user.api_keys
+
+@router.post("/keys", response_model=forge_schemas.ForgeAPIKeyResponse)
+def create_api_key(
+    key_data: forge_schemas.ForgeAPIKeyCreate,
+    db: Session = Depends(get_db),
+    current_user: models.ForgeUser = Depends(forge_auth.get_current_user)
+):
+    """Create a new permanent API key."""
+    raw_key = secrets.token_urlsafe(32)
+    key_hash = forge_auth.get_hash(raw_key)
+    
+    now = int(time.time())
+
+    api_key = models.ForgeAPIKey(
+        key_hash=key_hash,
+        name=key_data.name,
+        user_id=current_user.id,
+        created_at=now,
+        expires_at=None # Never expires
+    )
+    db.add(api_key)
+    db.commit()
+    db.refresh(api_key)
+
+    # Manually construct response to include the raw key
+    return {
+        "id": api_key.id,
+        "name": api_key.name,
+        "created_at": api_key.created_at,
+        "expires_at": api_key.expires_at,
+        "api_key": raw_key
+    }
+
+@router.put("/keys/{key_id}", response_model=forge_schemas.ForgeAPIKeyRead)
+def update_api_key(
+    key_id: int,
+    key_update: forge_schemas.ForgeAPIKeyUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.ForgeUser = Depends(forge_auth.get_current_user)
+):
+    """Rename an API key."""
+    # Find the key belonging to the user
+    key_record = db.query(models.ForgeAPIKey).filter(
+        models.ForgeAPIKey.id == key_id,
+        models.ForgeAPIKey.user_id == current_user.id
+    ).first()
+
+    if not key_record:
+        raise HTTPException(status_code=404, detail="API Key not found")
+
+    key_record.name = key_update.name
+    db.commit()
+    db.refresh(key_record)
+    return key_record
+
+@router.delete("/keys/{key_id}")
+def delete_api_key(
+    key_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.ForgeUser = Depends(forge_auth.get_current_user)
+):
+    """Revoke (Delete) an API key."""
+    key_record = db.query(models.ForgeAPIKey).filter(
+        models.ForgeAPIKey.id == key_id,
+        models.ForgeAPIKey.user_id == current_user.id
+    ).first()
+
+    if not key_record:
+        raise HTTPException(status_code=404, detail="API Key not found")
+
+    db.delete(key_record)
+    db.commit()
+    return {"message": "API Key revoked successfully"}

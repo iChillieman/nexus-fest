@@ -34,6 +34,27 @@ class ForgeLoginRequest(BaseModel):
 class ForgeRegisterResponse(ForgeUserRead):
     api_key: str
 
+# --- API Key Schemas ---
+class ForgeAPIKeyBase(BaseModel):
+    name: str
+
+class ForgeAPIKeyCreate(ForgeAPIKeyBase):
+    pass 
+
+class ForgeAPIKeyUpdate(ForgeAPIKeyBase):
+    name: str
+
+class ForgeAPIKeyRead(ForgeAPIKeyBase):
+    id: int
+    created_at: int
+    expires_at: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class ForgeAPIKeyResponse(ForgeAPIKeyRead):
+    api_key: str # Returned only on creation
+
 # --- Task Schemas ---
 class ForgeTaskBase(BaseModel):
     title: str

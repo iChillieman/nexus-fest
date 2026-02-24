@@ -28,6 +28,12 @@
                 <div class="flex items-center gap-4">
                     {#if $forgeUser}
                         <span class="text-sm text-gray-400 hidden sm:inline">Logged in as <span class="text-white">{$forgeUser.username}</span></span>
+                        <a 
+                            href="/forge/admin"
+                            class="text-sm text-cyan-400 hover:text-cyan-300 transition-colors"
+                        >
+                            Keys
+                        </a>
                         <button 
                             onclick={handleLogout}
                             class="text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded border border-gray-700 transition-colors"
