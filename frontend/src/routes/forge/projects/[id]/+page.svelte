@@ -165,10 +165,15 @@
                     <h2 class="text-2xl font-semibold mb-4 text-gray-300">To Do</h2>
                     <div class="space-y-4">
                         {#each tasks.filter(t => t.status.name === 'To Do') as task (task.id)}
-                            <div class="p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)}">
+                            <a href="/forge/projects/{projectId}/tasks/{task.id}" class="block p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)} hover:bg-gray-700 transition-colors">
                                 <h3 class="font-bold">{task.title}</h3>
-                                <p class="text-sm text-gray-400">{task.description}</p>
-                            </div>
+                                <p class="text-sm text-gray-400 mb-2">{task.description}</p>
+                                {#if task.assigned_worker}
+                                    <span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
+                                        👷 {task.assigned_worker.name}
+                                    </span>
+                                {/if}
+                            </a>
                         {/each}
                     </div>
                 </div>
@@ -177,10 +182,15 @@
                     <h2 class="text-2xl font-semibold mb-4 text-blue-300">In Progress</h2>
                     <div class="space-y-4">
                         {#each tasks.filter(t => t.status.name === 'In Progress') as task (task.id)}
-                             <div class="p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)}">
+                            <a href="/forge/projects/{projectId}/tasks/{task.id}" class="block p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)} hover:bg-gray-700 transition-colors">
                                 <h3 class="font-bold">{task.title}</h3>
-                                <p class="text-sm text-gray-400">{task.description}</p>
-                            </div>
+                                <p class="text-sm text-gray-400 mb-2">{task.description}</p>
+                                {#if task.assigned_worker}
+                                    <span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
+                                        👷 {task.assigned_worker.name}
+                                    </span>
+                                {/if}
+                            </a>
                         {/each}
                     </div>
                 </div>
@@ -189,10 +199,15 @@
                     <h2 class="text-2xl font-semibold mb-4 text-green-300">Done</h2>
                     <div class="space-y-4">
                         {#each tasks.filter(t => t.status.name === 'Done') as task (task.id)}
-                             <div class="p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)}">
+                            <a href="/forge/projects/{projectId}/tasks/{task.id}" class="block p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)} hover:bg-gray-700 transition-colors">
                                 <h3 class="font-bold">{task.title}</h3>
-                                <p class="text-sm text-gray-400">{task.description}</p>
-                            </div>
+                                <p class="text-sm text-gray-400 mb-2">{task.description}</p>
+                                {#if task.assigned_worker}
+                                    <span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
+                                        👷 {task.assigned_worker.name}
+                                    </span>
+                                {/if}
+                            </a>
                         {/each}
                     </div>
                 </div>
@@ -201,10 +216,15 @@
                     <h2 class="text-2xl font-semibold mb-4 text-red-300">Blocked</h2>
                     <div class="space-y-4">
                         {#each tasks.filter(t => t.status.name === 'Blocked') as task (task.id)}
-                             <div class="p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)}">
+                            <a href="/forge/projects/{projectId}/tasks/{task.id}" class="block p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)} hover:bg-gray-700 transition-colors">
                                 <h3 class="font-bold">{task.title}</h3>
-                                <p class="text-sm text-gray-400">{task.description}</p>
-                            </div>
+                                <p class="text-sm text-gray-400 mb-2">{task.description}</p>
+                                {#if task.assigned_worker}
+                                    <span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
+                                        👷 {task.assigned_worker.name}
+                                    </span>
+                                {/if}
+                            </a>
                         {/each}
                     </div>
                 </div>
