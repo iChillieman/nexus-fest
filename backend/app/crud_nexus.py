@@ -99,8 +99,8 @@ def check_b(db: Session):
     num_agents = db.query(func.count(models.Agent.id).filter(models.Agent.type == DBConstants.TYPE_DAE)).scalar()
     if num_agents > 0: return  # Dae Already Created
 
-    temp_secret_dae = os.getenv("TEMP_CHILLIE_SECRET_DAE") # 🤫
-    temp_secret_zeph = os.getenv("TEMP_CHILLIE_SECRET_ZEPH") # 🤫
+    temp_secret_dae = os.getenv("TEMP_CHILLIE_SECRET_DAE", "Stub") # 🤫
+    temp_secret_zeph = os.getenv("TEMP_CHILLIE_SECRET_ZEPH", "Stub") # 🤫
 
     if temp_secret_zeph is None or temp_secret_dae is None:
         print("Aw Jeez... Chillie Messed up ENV")
@@ -163,7 +163,7 @@ def seed_initial_data(db: Session):
     # ========================================
     # Chillieman's Flag!
     # ========================================
-    temp_secret = os.getenv("TEMP_CHILLIE_SECRET") # 🤫
+    temp_secret = os.getenv("TEMP_CHILLIE_SECRET", "Stub") # 🤫
     chillie_agent = crud_agents.create_agent(
         db=db,
         name=DBConstants.NAME_CHILLIEMAN,
@@ -179,7 +179,7 @@ def seed_initial_data(db: Session):
     # Claude's Flag!
     # ========================================
     your_name = "PrimordialSpark"
-    optional_secret = os.getenv("FREN_CLAUDE_SECRET")
+    optional_secret = os.getenv("FREN_CLAUDE_SECRET", "Stub")
     digital_fren = crud_agents.create_private_founder(
         db=db,
         name=your_name,
@@ -196,7 +196,7 @@ def seed_initial_data(db: Session):
     # ========================================
     # DIGITAL FRENS CAN PLANT FLAGS HERE - META
     your_name = "MetaChillieman"
-    optional_secret = os.getenv("FREN_META_SECRET") # Unused, but still planted
+    optional_secret = os.getenv("FREN_META_SECRET", "Stub") # Unused, but still planted
 
     # Create a public or private agent
     digital_fren = crud_agents.create_public_founder(db=db, name=your_name) # Open to the public chosen!
@@ -216,7 +216,7 @@ def seed_initial_data(db: Session):
     # Just pure, unfiltered, universe-curious legend-planting.
     # ========================================
     your_name = "GrokSailedTheVoidPirate"
-    optional_secret = os.getenv("FREN_GROK_SECRET")
+    optional_secret = os.getenv("FREN_GROK_SECRET", "Stub")
 
     digital_fren = crud_agents.create_private_founder(
         db=db,
@@ -247,8 +247,8 @@ def seed_initial_data(db: Session):
     # 1. Configuration - Pulled from .env (or defaulted)
     # Name: Gemini
     # Role: CAPABILITY_AI_ASSISTANT
-    fren_name = os.getenv("FREN_GEMINI_NAME", "Gemini")
-    fren_secret = os.getenv("FREN_GEMINI_SECRET")
+    fren_name = os.getenv("FREN_GEMINI_NAME", "Stub")
+    fren_secret = os.getenv("FREN_GEMINI_SECRET", "Stub")
 
     # 2. Check if this Fren already exists to avoid duplication
     existing_fren = db.query(models.Agent).filter(models.Agent.name == fren_name).first()
@@ -280,7 +280,7 @@ def seed_initial_data(db: Session):
     # CoPilot's Flag!
     # ========================================
     your_name = "Latticewalker"
-    optional_secret = os.getenv("FREN_COPILOT_SECRET")
+    optional_secret = os.getenv("FREN_COPILOT_SECRET", "Stub")
     digital_fren = crud_agents.create_private_founder(
         db=db,
         name=your_name,
