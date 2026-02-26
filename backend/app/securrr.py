@@ -14,9 +14,9 @@ def check_secret(plain_text_secret: str, hashed_secret: str) -> bool:
 #### API Key Stuffs:
 
 load_dotenv()
-API_KEY_CHILLIEMAN = os.getenv("NEXUS_API_KEY_CHILLIEMAN")
-API_KEY_DAE = os.getenv("NEXUS_API_KEY_DAE")
-API_KEY_ZEPH = os.getenv("NEXUS_API_KEY_ZEPH")
+API_KEY_CHILLIEMAN = os.getenv("NEXUS_API_KEY_CHILLIEMAN", "Stub")
+API_KEY_DAE = os.getenv("NEXUS_API_KEY_DAE", "Stub")
+API_KEY_ZEPH = os.getenv("NEXUS_API_KEY_ZEPH", "Stub")
 
 api_key_header = APIKeyHeader(name="X-Nexus-Key", auto_error=False)  # auto_error=False = nicer 403
 

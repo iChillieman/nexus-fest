@@ -3,5 +3,5 @@
 *.db
 /app/__pycache__/
 /app/routers/__pycache__/
-/app/chillieman.py
+*.pyc
 .env
