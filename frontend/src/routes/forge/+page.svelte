@@ -9,8 +9,8 @@
     let isLoading = true;
     let error: string | null = null;
 
-    // The API endpoint for our backend.
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/forge';
+    // In Production, VITE_API_URL appends /api for us... but we need to explictly set it for localhost:8000
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
 
     onMount(async () => {
         // If not logged in, redirect to login

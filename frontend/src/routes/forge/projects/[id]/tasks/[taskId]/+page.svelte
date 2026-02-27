@@ -11,7 +11,8 @@
     let isLoading = true;
     let error: string | null = null;
 
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/forge';
+    // In Production, VITE_API_URL appends /api for us... but we need to explictly set it for localhost:8000
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
     
     // Params from URL
     const projectId = $page.params.id; 
@@ -27,7 +28,7 @@
 
     async function fetchTask() {
         try {
-            const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, { # Wait, endpoint is just /tasks/{id}? No project ID needed for GET /tasks/{id}
+            const response = await fetch(`${API_BASE_URL}/tasks/${taskId}`, {
                 headers: { 'X-API-Key': $forgeUser?.api_key || '' }
             });
             

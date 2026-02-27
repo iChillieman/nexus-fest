@@ -10,6 +10,7 @@
     let isLoading = false;
     let registeredKey: string | null = null;
 
+    // In Production, VITE_API_URL appends /api for us... but we need to explictly set it for localhost:8000
     const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
 
     async function handleRegister() {

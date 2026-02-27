@@ -10,7 +10,8 @@
     let newKeyName = "";
     let createdKey: any = null; // Stores the raw key response after creation
 
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/forge/auth';
+    // In Production, VITE_API_URL appends /api for us... but we need to explictly set it for localhost:8000
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge/auth';
 
     onMount(async () => {
         if (!$forgeUser) {

@@ -11,10 +11,8 @@
     let error: string | null = null;
     let socket: WebSocket | null = null;
     
-    // Determine Base URLs
-    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000') + '/api/forge';
-    // Convert HTTP URL to WebSocket URL
-    const WS_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/^http/, 'ws') + '/api/forge';
+    // Determine Base URLs (In Production, VITE_API_URL appends /api for us... but we need to explictly set it for localhost:8000)
+    const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
     
     const projectId = $page.params.id;
 
@@ -70,7 +68,13 @@
     });
 
     function connectWebSocket() {
-        const wsUrl = `${WS_BASE_URL}/ws/forge/projects/${projectId}`;
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        let host = window.location.host;
+        if (host.startsWith("localhost")) {
+            host = "localhost:8000";
+        }
+
+        const wsUrl = `${protocol}://${host}/ws/forge/projects/${projectId}`;
         console.log("Connecting to WebSocket:", wsUrl);
         
         socket = new WebSocket(wsUrl);
