@@ -6,3 +6,4 @@
 /app/routers/forge/__pycache__/
 *.pyc
 .env
+results.txt
