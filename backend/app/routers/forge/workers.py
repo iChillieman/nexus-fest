@@ -99,3 +99,34 @@ def create_worker_key(
         "expires_at": api_key.expires_at,
         "api_key": raw_key
     }
+
+@router.delete("/{worker_id}/keys/{key_id}")
+def delete_worker_key(
+    worker_id: int,
+    key_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.ForgeUser = Depends(forge_auth.get_current_user)
+):
+    """Revoke (Delete) an API Key for a specific worker."""
+    # Verify worker ownership
+    worker = db.query(models.ForgeWorker).filter(
+        models.ForgeWorker.id == worker_id,
+        models.ForgeWorker.user_id == current_user.id,
+        models.ForgeWorker.deleted_at == None
+    ).first()
+    
+    if not worker:
+        raise HTTPException(status_code=404, detail="Worker not found")
+
+    key_record = db.query(models.ForgeAPIKey).filter(
+        models.ForgeAPIKey.id == key_id,
+        models.ForgeAPIKey.worker_id == worker_id,
+        models.ForgeAPIKey.type == "WORKER"
+    ).first()
+
+    if not key_record:
+        raise HTTPException(status_code=404, detail="API Key not found")
+
+    db.delete(key_record)
+    db.commit()
+    return {"message": "API Key revoked successfully"}
