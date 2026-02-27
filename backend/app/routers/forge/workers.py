@@ -17,7 +17,7 @@ def list_workers(
     current_user: models.ForgeUser = Depends(forge_auth.get_current_user)
 ):
     """List all workers owned by the current user."""
-    return current_user.workers
+    return [w for w in current_user.workers if w.deleted_at is None]
 
 @router.post("/", response_model=forge_schemas.ForgeWorkerRead)
 def create_worker(
@@ -46,13 +46,14 @@ def delete_worker(
     """Delete a worker."""
     worker = db.query(models.ForgeWorker).filter(
         models.ForgeWorker.id == worker_id,
-        models.ForgeWorker.user_id == current_user.id
+        models.ForgeWorker.user_id == current_user.id,
+        models.ForgeWorker.deleted_at == None
     ).first()
     
     if not worker:
         raise HTTPException(status_code=404, detail="Worker not found")
         
-    db.delete(worker)
+    worker.deleted_at = int(time.time())
     db.commit()
     return {"message": "Worker deleted"}
 
@@ -67,7 +68,8 @@ def create_worker_key(
     # Verify worker ownership
     worker = db.query(models.ForgeWorker).filter(
         models.ForgeWorker.id == worker_id,
-        models.ForgeWorker.user_id == current_user.id
+        models.ForgeWorker.user_id == current_user.id,
+        models.ForgeWorker.deleted_at == None
     ).first()
     
     if not worker:

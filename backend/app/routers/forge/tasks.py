@@ -47,6 +47,23 @@ def read_tasks_for_project(
     tasks = forge_crud.get_tasks_by_project(db, project_id=project_id, user_id=user_id, skip=skip, limit=limit)
     return tasks
 
+@router.get("/{task_id}", response_model=forge_schemas.ForgeTaskRead)
+def read_task(
+    task_id: int, 
+    db: Session = Depends(get_db),
+    current_actor: Union[models.ForgeUser, models.ForgeWorker] = Depends(forge_auth.get_current_actor)
+):
+    # Allow both Users and Workers to view a specific task
+    if isinstance(current_actor, models.ForgeWorker):
+        user_id = current_actor.user_id
+    else:
+        user_id = current_actor.id
+
+    db_task = forge_crud.get_task(db, task_id=task_id, user_id=user_id)
+    if db_task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return db_task
+
 @router.put("/{task_id}", response_model=forge_schemas.ForgeTaskRead)
 async def update_task(
     task_id: int, 

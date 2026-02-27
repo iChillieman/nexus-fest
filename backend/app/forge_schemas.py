@@ -62,6 +62,7 @@ class ForgeWorkerRead(ForgeWorkerBase):
     id: int
     user_id: int
     created_at: int
+    deleted_at: Optional[int] = None
     
     class Config:
         from_attributes = True

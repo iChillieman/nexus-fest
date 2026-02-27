@@ -115,6 +115,7 @@ class ForgeWorker(Base):
     name = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('forge_users.id'), nullable=False)
     created_at = Column(Integer, nullable=False)
+    deleted_at = Column(Integer, nullable=True)
 
     user = relationship("ForgeUser", back_populates="workers")
     api_keys = relationship("ForgeAPIKey", back_populates="worker")

@@ -73,6 +73,10 @@ async def get_current_actor(
     Used for shared endpoints (Tasks, Comments).
     """
     if key_record.type == "WORKER":
+        if key_record.worker.deleted_at is not None:
+             raise HTTPException(
+                status_code=HTTP_403_FORBIDDEN, detail="Worker has been deleted"
+            )
         return key_record.worker
     return key_record.user
 
