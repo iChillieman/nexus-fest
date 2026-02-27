@@ -149,7 +149,7 @@ app.include_router(chillie.router)
 app.include_router(forge_auth_router.router, prefix="/api/forge")
 app.include_router(forge_projects_router.router, prefix="/api/forge")
 app.include_router(forge_tasks_router.router, prefix="/api/forge")
-app.include_router(forge_sockets_router.router, prefix="/api/forge")
+app.include_router(forge_sockets_router.router)
 app.include_router(forge_workers_router.router, prefix="/api/forge")
 
 
