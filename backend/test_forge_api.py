@@ -27,6 +27,14 @@ def assert_status(response, expected_status, name):
             log(f"   Response Body: {response.text}", "ERROR")
         return False
 
+# Helper function to catch connection errors easily
+def make_request(method, url, **kwargs):
+    try:
+        return requests.request(method, url, **kwargs)
+    except requests.exceptions.ConnectionError:
+        log(f"❌ Connection refused to {url}. Is the backend running?", "ERROR")
+        sys.exit(1)
+
 def run_tests():
     clear_log()
     log("=====================================")
@@ -35,9 +43,30 @@ def run_tests():
 
     log("Note: This script assumes a clean or test DB environment.")
     
-    # Allow overriding API key via arguments
-    API_KEY = sys.argv[1] if len(sys.argv) > 1 else "OCzrdQNeBX_3GuVSDSuClOwuYCFhh3TPS4IpcVuw6YA"
+    log("\n--- STEP 0: Authentication ---")
     
+    # Generate unique user details to ensure a clean registration every time
+    timestamp = str(int(time.time()))
+    test_username = f"test_user_{timestamp}"
+    test_email = f"test_{timestamp}@example.com"
+    test_password = "TestPassword123!"
+
+    log(f"Registering new test user: {test_username}")
+    res = make_request("POST", f"{BASE_URL}/auth/register", json={
+        "username": test_username,
+        "email": test_email,
+        "password": test_password
+    })
+    
+    if not assert_status(res, 200, "User Registration"):
+        log("❌ Failed to register user. Tests aborted.", "ERROR")
+        sys.exit(1)
+        
+    API_KEY = res.json().get("api_key")
+    user_id = res.json().get("id")
+    log(f"   Successfully registered User ID: {user_id}")
+    log(f"   Using newly minted API Key: {API_KEY[:5]}...{API_KEY[-5:]}")
+
     headers = {
         "accept": "application/json",
         "X-API-Key": API_KEY,
@@ -49,16 +78,6 @@ def run_tests():
         "X-API-Key": "wrong_key_123",
         "Content-Type": "application/json"
     }
-
-    log(f"Using API Key: {API_KEY[:5]}...{API_KEY[-5:]}")
-
-    # Helper function to catch connection errors easily
-    def make_request(method, url, **kwargs):
-        try:
-            return requests.request(method, url, **kwargs)
-        except requests.exceptions.ConnectionError:
-            log(f"❌ Connection refused to {url}. Is the backend running?", "ERROR")
-            sys.exit(1)
 
     # ==========================
     # VALID TESTS
@@ -152,7 +171,6 @@ def run_tests():
     res = make_request("POST", f"{BASE_URL}/tasks/{task_id}/restore", headers=headers)
     assert_status(res, 200, "Restore Task")
 
-
     # ==========================
     # INVALID TESTS
     # ==========================
@@ -172,7 +190,6 @@ def run_tests():
 
     res = make_request("DELETE", f"{BASE_URL}/projects/{task_project_id}", headers=bad_headers)
     assert_status(res, 403, "Invalid Delete Single Project")
-
 
     # ==========================
     # WORKER TESTS
