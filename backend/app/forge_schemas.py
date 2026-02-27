@@ -51,22 +51,6 @@ class ForgeTaskCommentRead(ForgeTaskCommentBase):
     class Config:
         from_attributes = True
 
-# --- Worker Schemas ---
-class ForgeWorkerBase(BaseModel):
-    name: str
-
-class ForgeWorkerCreate(ForgeWorkerBase):
-    pass
-
-class ForgeWorkerRead(ForgeWorkerBase):
-    id: int
-    user_id: int
-    created_at: int
-    deleted_at: Optional[int] = None
-    
-    class Config:
-        from_attributes = True
-
 # --- API Key Schemas ---
 class ForgeAPIKeyBase(BaseModel):
     name: str
@@ -87,6 +71,23 @@ class ForgeAPIKeyRead(ForgeAPIKeyBase):
 
 class ForgeAPIKeyResponse(ForgeAPIKeyRead):
     api_key: str # Returned only on creation
+
+# --- Worker Schemas ---
+class ForgeWorkerBase(BaseModel):
+    name: str
+
+class ForgeWorkerCreate(ForgeWorkerBase):
+    pass
+
+class ForgeWorkerRead(ForgeWorkerBase):
+    id: int
+    user_id: int
+    created_at: int
+    deleted_at: Optional[int] = None
+    api_keys: List[ForgeAPIKeyRead] = []
+    
+    class Config:
+        from_attributes = True
 
 # --- Task Schemas ---
 class ForgeTaskBase(BaseModel):

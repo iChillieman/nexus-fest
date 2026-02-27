@@ -4,6 +4,7 @@
     import { goto } from '$app/navigation';
 
     let keys: any[] = [];
+    let workers: any[] = [];
     let isLoading = true;
     let error: string | null = null;
     let showCreateModal = false;
@@ -12,6 +13,7 @@
 
     // In Production, VITE_API_URL appends /api for us... but we need to explictly set it for localhost:8000
     const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge/auth';
+    const WORKERS_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge/workers';
 
     onMount(async () => {
         if (!$forgeUser) {
@@ -19,6 +21,7 @@
             return;
         }
         await fetchKeys();
+        await fetchWorkers();
     });
 
     async function fetchKeys() {
@@ -36,6 +39,18 @@
             error = e.message;
         } finally {
             isLoading = false;
+        }
+    }
+
+        async function fetchWorkers() {
+        try {
+            const response = await fetch(`${WORKERS_API_URL}/`, {
+                headers: { 'X-API-Key': $forgeUser?.api_key || '' }
+            });
+            if (!response.ok) throw new Error("Failed to fetch workers");
+            workers = await response.json();
+        } catch (e: any) {
+            console.error(e);
         }
     }
 
@@ -68,6 +83,20 @@
             });
             if (!response.ok) throw new Error("Failed to delete key");
             await fetchKeys();
+        } catch (e: any) {
+            alert(e.message);
+        }
+    }
+
+        async function deleteWorkerKey(workerId: number, keyId: number) {
+        if (!confirm("Are you sure you want to revoke this Worker API key? This action cannot be undone.")) return;
+        try {
+            const response = await fetch(`${WORKERS_API_URL}/${workerId}/keys/${keyId}`, {
+                method: 'DELETE',
+                headers: { 'X-API-Key': $forgeUser?.api_key || '' }
+            });
+            if (!response.ok) throw new Error("Failed to delete worker key");
+            await fetchWorkers();
         } catch (e: any) {
             alert(e.message);
         }
@@ -158,6 +187,40 @@
                 {/each}
                  {#if keys.filter(k => k.expires_at).length === 0}
                     <p class="text-gray-500 italic">No active sessions found.</p>
+                {/if}
+            </div>
+        </section>
+
+        <!-- Workers Section -->
+        <section>
+            <h2 class="text-2xl font-semibold mb-4 text-gray-200 border-b border-gray-700 pb-2">Workers & API Tokens</h2>
+            <div class="space-y-6">
+                {#each workers as worker (worker.id)}
+                    <div class="bg-gray-800 p-4 rounded-lg border border-gray-700">
+                        <div class="flex items-center gap-2 mb-4">
+                            <h3 class="font-bold text-xl text-cyan-400">🤖 {worker.name}</h3>
+                            <span class="text-xs text-gray-500 bg-gray-900 px-2 py-1 rounded">Worker ID: {worker.id}</span>
+                        </div>
+                        
+                        {#if worker.api_keys && worker.api_keys.length > 0}
+                            <div class="space-y-2 pl-4 border-l-2 border-gray-700">
+                                {#each worker.api_keys as key (key.id)}
+                                    <div class="bg-gray-900 p-3 rounded flex justify-between items-center border border-gray-800">
+                                        <div>
+                                            <h4 class="font-semibold text-gray-300">{key.name}</h4>
+                                            <p class="text-xs text-gray-500">Created: {formatDate(key.created_at)}</p>
+                                        </div>
+                                        <button onclick={() => deleteWorkerKey(worker.id, key.id)} class="text-red-400 hover:text-red-300 px-3 py-1 border border-red-900 bg-red-900/20 rounded text-sm transition-colors">Revoke Key</button>
+                                    </div>
+                                {/each}
+                            </div>
+                        {:else}
+                            <p class="text-gray-500 italic pl-4 border-l-2 border-gray-700">No API tokens for this worker.</p>
+                        {/if}
+                    </div>
+                {/each}
+                {#if workers.length === 0}
+                    <p class="text-gray-500 italic">No workers found.</p>
                 {/if}
             </div>
         </section>
