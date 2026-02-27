@@ -1,4 +1,38 @@
-# ... (Previous schemas)
+from pydantic import BaseModel
+from typing import List, Optional
+
+# --- Status Schemas ---
+class ForgeStatusBase(BaseModel):
+    name: str
+
+class ForgeStatusRead(ForgeStatusBase):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+# --- User & Auth Schemas ---
+class ForgeUserBase(BaseModel):
+    username: str
+
+class ForgeUserCreate(ForgeUserBase):
+    email: str
+    password: str
+
+class ForgeUserRead(ForgeUserBase):
+    id: int
+    email: str
+    created_at: int
+
+    class Config:
+        from_attributes = True
+
+class ForgeLoginRequest(BaseModel):
+    username: str
+    password: str
+
+class ForgeRegisterResponse(ForgeUserRead):
+    api_key: str
 
 # --- Comment Schemas ---
 class ForgeTaskCommentBase(BaseModel):
