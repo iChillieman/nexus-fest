@@ -9,6 +9,7 @@
     let error: string | null = null;
     let isLoading = false;
     let registeredKey: string | null = null;
+    let hasCopiedKey = false;
 
     // In Production, VITE_API_URL appends /api for us... but we need to explictly set it for localhost:8000
     const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000/api') + '/forge';
@@ -72,9 +73,15 @@
                 <div class="bg-black/50 p-3 rounded font-mono text-cyan-300 text-sm break-all border border-gray-600 select-all">
                     {registeredKey}
                 </div>
+                
+                <label class="flex items-center gap-2 mt-4 text-gray-300 cursor-pointer">
+                    <input type="checkbox" bind:checked={hasCopiedKey} class="w-4 h-4 text-cyan-500 bg-gray-900 border-gray-600 rounded focus:ring-cyan-500 focus:ring-2" />
+                    <span>I confirm that I have copied my API Key</span>
+                </label>
                 <button 
                     on:click={done}
-                    class="mt-6 w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded"
+                    class="mt-6 w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                    disabled={!hasCopiedKey}
                 >
                     I have saved my key
                 </button>
