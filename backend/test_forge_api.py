@@ -50,12 +50,14 @@ def run_tests():
     test_username = f"test_user_{timestamp}"
     test_email = f"test_{timestamp}@example.com"
     test_password = "TestPassword123!"
+    test_chillie_code = "chillieman"
 
     log(f"Registering new test user: {test_username}")
     res = make_request("POST", f"{BASE_URL}/auth/register", json={
         "username": test_username,
         "email": test_email,
-        "password": test_password
+        "password": test_password,
+        "chillie_code": test_chillie_code
     })
     
     if not assert_status(res, 200, "User Registration"):

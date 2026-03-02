@@ -3,7 +3,7 @@ import requests
 import argparse
 import json
 
-BASE_URL = os.getenv("NEXUS_FORGE_API_URL", "http://localhost:8000/forge")
+BASE_URL = os.getenv("NEXUS_FORGE_API_URL", "http://localhost:8000/api/forge")
 
 class NexusForgeClient:
     def __init__(self, api_key: str):
