@@ -14,10 +14,8 @@ router = APIRouter(
 
 @router.post("/register", response_model=forge_schemas.ForgeRegisterResponse)
 def register(request: forge_schemas.ForgeRegisterRequest, db: Session = Depends(get_db)):
-    expected_code = os.getenv("NEXUS_FORGE_CHILLIE_CODE")
-    if expected_code and request.chillie_code != expected_code:
-        raise HTTPException(status_code=403, detail="Invalid Verification Code")
-    elif not expected_code and request.chillie_code != "chillieman": # Fallback for local testing
+    expected_code = os.getenv("NEXUS_FORGE_CHILLIE_CODE", "chillieman")
+    if request.chillie_code != expected_code:
         raise HTTPException(status_code=403, detail="Invalid Verification Code")
 
     if forge_crud.get_user_by_username(db, username=request.username):
