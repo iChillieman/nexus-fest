@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from typing import List, Union
 from ... import forge_schemas, forge_crud, forge_auth, models
@@ -33,6 +33,7 @@ async def create_task(
 @router.get("/project/{project_id}", response_model=List[forge_schemas.ForgeTaskRead])
 def read_tasks_for_project(
     project_id: int, 
+    status_ids: List[int] = Query(None),
     skip: int = 0, 
     limit: int = 100, 
     db: Session = Depends(get_db),
@@ -44,7 +45,7 @@ def read_tasks_for_project(
     else:
         user_id = current_actor.id
 
-    tasks = forge_crud.get_tasks_by_project(db, project_id=project_id, user_id=user_id, skip=skip, limit=limit)
+    tasks = forge_crud.get_tasks_by_project(db, project_id=project_id, user_id=user_id, skip=skip, limit=limit, status_ids=status_ids)
     return tasks
 
 @router.get("/{task_id}", response_model=forge_schemas.ForgeTaskRead)

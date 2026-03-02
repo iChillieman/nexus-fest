@@ -96,16 +96,21 @@ def get_task(db: Session, task_id: int, user_id: int, include_deleted: bool = Fa
         query = query.filter(models.ForgeTask.deleted_at == None)
     return query.filter(models.ForgeTask.id == task_id).first()
 
-def get_tasks_by_project(db: Session, project_id: int, user_id: int, skip: int = 0, limit: int = 100):
+def get_tasks_by_project(db: Session, project_id: int, user_id: int, skip: int = 0, limit: int = 100, status_ids: list[int] = None):
     # Verify ownership via project
     project = get_project(db, project_id, user_id)
     if not project:
         return []
     
-    return db.query(models.ForgeTask).filter(
+    query = db.query(models.ForgeTask).filter(
         models.ForgeTask.project_id == project_id,
         models.ForgeTask.deleted_at == None
-    ).offset(skip).limit(limit).all()
+    )
+
+    if status_ids:
+        query = query.filter(models.ForgeTask.status_id.in_(status_ids))
+        
+    return query.offset(skip).limit(limit).all()
 
 def create_task(db: Session, task: forge_schemas.ForgeTaskCreate, user_id: int):
     project = get_project(db, task.project_id, user_id)
@@ -167,8 +172,9 @@ def seed_forge_statuses(db: Session):
         statuses = [
             models.ForgeStatus(id=1, name="To Do"),
             models.ForgeStatus(id=2, name="In Progress"),
-            models.ForgeStatus(id=3, name="Done"),
-            models.ForgeStatus(id=4, name="Blocked")
+            models.ForgeStatus(id=3, name="Ready for Review"),
+            models.ForgeStatus(id=4, name="Done"),
+            models.ForgeStatus(id=5, name="Blocked")
         ]
         db.add_all(statuses)
         db.commit()
