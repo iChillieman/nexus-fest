@@ -32,11 +32,23 @@ class NexusWorkerClient:
     def get_task(self, task_id):
         return self._request("GET", f"/tasks/{task_id}")
 
-    def update_task_status(self, task_id, status_id=None, notes=None):
-        data = {}
-        if status_id is not None: data["status_id"] = status_id
+    def update_task_status(self, task_id, status_id, comment, notes=None):
+        if not comment:
+            raise ValueError("A comment is required when updating a task status.")
+        
+        data = {"status_id": status_id}
         if notes is not None: data["notes"] = notes
-        return self._request("PUT", f"/tasks/{task_id}", data=data)
+        
+        # 1. Update task status and notes
+        task_response = self._request("PUT", f"/tasks/{task_id}", data=data)
+        
+        # 2. Add the required comment
+        comment_response = self._request("POST", f"/tasks/{task_id}/comments", data={"content": comment})
+        
+        return {
+            "task_updated": task_response,
+            "comment_added": comment_response
+        }
 
     def add_comment(self, task_id, content):
         return self._request("POST", f"/tasks/{task_id}/comments", data={"content": content})

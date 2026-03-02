@@ -81,9 +81,9 @@ python nexus-worker.py --api-key YOUR_WORKER_API_KEY --action <action> [--data '
     *   Input: `{"task_id": int}`
     *   Example: `--data '{"task_id": 12}'`
 *   **`update_task_status`**
-    *   Input: `{"task_id": int, "status_id": int (optional), "notes": "string (optional)"}`
-    *   *(Note: Workers cannot change the title, description, detail, or assignment.)*
-    *   Example: `--data '{"task_id": 12, "status_id": 3, "notes": "PR submitted"}'`
+    *   Input: `{"task_id": int, "status_id": int, "comment": "string", "notes": "string (optional)"}`
+    *   *(Note: Workers MUST include a comment when updating task status. This action makes two API calls under the hood.)*
+    *   Example: `--data '{"task_id": 12, "status_id": 3, "comment": "PR submitted"}'`
 *   **`add_comment`**
     *   Input: `{"task_id": int, "content": "string"}`
     *   Example: `--data '{"task_id": 12, "content": "Encountered an issue with the API."}'`
