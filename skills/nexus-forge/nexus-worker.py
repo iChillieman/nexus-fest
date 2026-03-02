@@ -23,8 +23,11 @@ class NexusWorkerClient:
             print(f"Error: {e.response.text}")
             raise
 
-    def get_tasks(self, project_id, skip=0, limit=100):
-        return self._request("GET", f"/tasks/project/{project_id}", params={"skip": skip, "limit": limit})
+    def get_tasks(self, project_id, skip=0, limit=100, status_ids=None):
+        params = {"skip": skip, "limit": limit}
+        if status_ids:
+            params["status_ids"] = status_ids
+        return self._request("GET", f"/tasks/project/{project_id}", params=params)
 
     def get_task(self, task_id):
         return self._request("GET", f"/tasks/{task_id}")

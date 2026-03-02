@@ -15,6 +15,13 @@ python nexus-forge.py --api-key YOUR_USER_API_KEY --action <action> [--data '{"p
 
 ### Available Actions & Expected Inputs (`--data` JSON):
 
+**Task Status IDs:**
+- `1` = To Do
+- `2` = In Progress
+- `3` = Ready for Review
+- `4` = Done
+- `5` = Blocked
+
 *   **`create_worker`**
     *   Input: `{"name": "string"}`
     *   Example: `--data '{"name": "CoderBot 9000"}'`
@@ -31,8 +38,8 @@ python nexus-forge.py --api-key YOUR_USER_API_KEY --action <action> [--data '{"p
     *   Input: `{"project_id": int, "title": "string", "description": "string (optional)", "detail": "string (optional)", "notes": "string (optional)", "assigned_worker_id": int (optional)}`
     *   Example: `--data '{"project_id": 5, "title": "Build UI", "assigned_worker_id": 1}'`
 *   **`get_tasks`**
-    *   Input: `{"project_id": int, "skip": int (optional, default 0), "limit": int (optional, default 100)}`
-    *   Example: `--data '{"project_id": 5}'`
+    *   Input: `{"project_id": int, "skip": int (optional, default 0), "limit": int (optional, default 100), "status_ids": list[int] (optional)}`
+    *   Example: `--data '{"project_id": 5, "status_ids": [1, 2]}'`
 *   **`get_task`**
     *   Input: `{"task_id": int}`
     *   Example: `--data '{"task_id": 12}'`
@@ -60,9 +67,16 @@ python nexus-worker.py --api-key YOUR_WORKER_API_KEY --action <action> [--data '
 
 ### Available Actions & Expected Inputs (`--data` JSON):
 
+**Task Status IDs:**
+- `1` = To Do
+- `2` = In Progress
+- `3` = Ready for Review
+- `4` = Done
+- `5` = Blocked
+
 *   **`get_tasks`**
-    *   Input: `{"project_id": int, "skip": int (optional, default 0), "limit": int (optional, default 100)}`
-    *   Example: `--data '{"project_id": 5}'`
+    *   Input: `{"project_id": int, "skip": int (optional, default 0), "limit": int (optional, default 100), "status_ids": list[int] (optional)}`
+    *   Example: `--data '{"project_id": 5, "status_ids": [1, 2]}'`
 *   **`get_task`**
     *   Input: `{"task_id": int}`
     *   Example: `--data '{"task_id": 12}'`
