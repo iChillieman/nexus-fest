@@ -1,15 +1,16 @@
 import os
 import requests
 import json
+import argparse
 
 BASE_URL = os.getenv("NEXUS_FORGE_API_URL", "http://localhost:8000/forge")
 
 class NexusForgeClient:
-    def __init__(self, token: str, is_worker: bool = False):
-        self.token = token
+    def __init__(self, api_key: str, is_worker: bool = False):
+        self.api_key = api_key
         self.is_worker = is_worker
         self.headers = {
-            "Authorization": f"Bearer {self.token}",
+            "X-API-Key": self.api_key,
             "Content-Type": "application/json"
         }
 
@@ -40,4 +41,10 @@ class NexusForgeClient:
         return self._request("POST", f"/tasks/{task_id}/comments", data={"content": content})
 
 if __name__ == "__main__":
-    print("NexusForgeClient initialized.")
+    parser = argparse.ArgumentParser(description="NexusForge API Client")
+    parser.add_argument("--api-key", required=True, help="API Key for NexusForge backend")
+    parser.add_argument("--worker", action="store_true", help="Flag if this is a worker API key")
+    args = parser.parse_args()
+    
+    client = NexusForgeClient(api_key=args.api_key, is_worker=args.worker)
+    print("NexusForgeClient initialized successfully with API key.")
