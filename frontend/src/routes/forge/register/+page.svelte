@@ -37,9 +37,6 @@
             // Store the key temporarily to show the user
             registeredKey = userData.api_key;
             
-            // Log them in
-            forgeUser.set(userData);
-            
         } catch (e: any) {
             error = e.message;
         } finally {
@@ -48,7 +45,7 @@
     }
     
     function done() {
-        goto('/forge');
+        goto('/forge/login');
     }
 </script>
 
