@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Security
 from sqlalchemy.orm import Session
 from typing import List
 import secrets
+import os
 from ... import forge_schemas, forge_crud, models, forge_auth
 from ...database import get_db
 
@@ -12,12 +13,23 @@ router = APIRouter(
 )
 
 @router.post("/register", response_model=forge_schemas.ForgeRegisterResponse)
-def register(user: forge_schemas.ForgeUserCreate, db: Session = Depends(get_db)):
-    if forge_crud.get_user_by_username(db, username=user.username):
+def register(request: forge_schemas.ForgeRegisterRequest, db: Session = Depends(get_db)):
+    expected_code = os.getenv("NEXUS_FORGE_CHILLIE_CODE")
+    if expected_code and request.chillie_code != expected_code:
+        raise HTTPException(status_code=403, detail="Invalid Verification Code")
+    elif not expected_code and request.chillie_code != "chillieman": # Fallback for local testing
+        raise HTTPException(status_code=403, detail="Invalid Verification Code")
+
+    if forge_crud.get_user_by_username(db, username=request.username):
         raise HTTPException(status_code=400, detail="Username already registered")
-    if forge_crud.get_user_by_email(db, email=user.email):
+    if forge_crud.get_user_by_email(db, email=request.email):
         raise HTTPException(status_code=400, detail="Email already registered")
 
+    user = forge_schemas.ForgeUserCreate(
+        username=request.username,
+        email=request.email,
+        password=request.password
+    )
     db_user = forge_crud.create_user(db, user=user)
 
     raw_key = secrets.token_urlsafe(32)

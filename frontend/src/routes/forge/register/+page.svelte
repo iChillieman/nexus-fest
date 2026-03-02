@@ -6,6 +6,7 @@
     let username = '';
     let email = '';
     let password = '';
+    let chillie_code = '';
     let error: string | null = null;
     let isLoading = false;
     let registeredKey: string | null = null;
@@ -24,7 +25,7 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username, email, password }),
+                body: JSON.stringify({ username, email, password, chillie_code }),
             });
 
             if (!response.ok) {
@@ -117,6 +118,18 @@
                         bind:value={password}
                         class="w-full bg-gray-900 border border-gray-600 rounded px-4 py-2 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
                         placeholder="••••••••"
+                        required
+                    />
+                </div>
+
+                <div>
+                    <label for="chillie_code" class="block text-sm font-medium text-gray-400 mb-2">Verification Code</label>
+                    <input 
+                        id="chillie_code" 
+                        type="password" 
+                        bind:value={chillie_code}
+                        class="w-full bg-gray-900 border border-gray-600 rounded px-4 py-2 text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        placeholder="Secret Code"
                         required
                     />
                 </div>
