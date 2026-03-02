@@ -133,6 +133,7 @@
         switch (statusName.toLowerCase()) {
             case 'to do': return 'border-gray-500';
             case 'in progress': return 'border-blue-500';
+            case 'ready for review': return 'border-purple-500';
             case 'done': return 'border-green-500';
             case 'blocked': return 'border-red-500';
             default: return 'border-gray-700';
@@ -163,7 +164,7 @@
                 <p class="text-gray-400 mt-2">{project.description}</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 <!-- To Do Column -->
                 <div>
                     <h2 class="text-2xl font-semibold mb-4 text-gray-300">To Do</h2>
@@ -186,6 +187,23 @@
                     <h2 class="text-2xl font-semibold mb-4 text-blue-300">In Progress</h2>
                     <div class="space-y-4">
                         {#each tasks.filter(t => t.status.name === 'In Progress') as task (task.id)}
+                            <a href="/forge/projects/{projectId}/tasks/{task.id}" class="block p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)} hover:bg-gray-700 transition-colors">
+                                <h3 class="font-bold">{task.title}</h3>
+                                <p class="text-sm text-gray-400 mb-2">{task.description}</p>
+                                {#if task.assigned_worker}
+                                    <span class="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded border border-blue-800">
+                                        👷 {task.assigned_worker.name}
+                                    </span>
+                                {/if}
+                            </a>
+                        {/each}
+                    </div>
+                </div>
+                <!-- Ready for Review Column -->
+                <div>
+                    <h2 class="text-2xl font-semibold mb-4 text-purple-300">Ready for Review</h2>
+                    <div class="space-y-4">
+                        {#each tasks.filter(t => t.status.name === 'Ready for Review') as task (task.id)}
                             <a href="/forge/projects/{projectId}/tasks/{task.id}" class="block p-4 bg-gray-800 rounded-lg border-l-4 {getStatusColor(task.status.name)} hover:bg-gray-700 transition-colors">
                                 <h3 class="font-bold">{task.title}</h3>
                                 <p class="text-sm text-gray-400 mb-2">{task.description}</p>
