@@ -19,6 +19,9 @@ class ForgeUserCreate(ForgeUserBase):
     email: str
     password: str
 
+class ForgeRegisterRequest(ForgeUserCreate):
+    chillie_code: str
+
 class ForgeUserRead(ForgeUserBase):
     id: int
     email: str
