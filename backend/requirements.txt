@@ -5,6 +5,8 @@ sqlalchemy
 pydantic
 bcrypt
 python-dotenv
+passlib[argon2]
+python-multipart
 
 # Not needed, as its included with fastapi - But gets rid of IDE Warning (OCD thing lol):
 starlette

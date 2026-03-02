@@ -78,3 +78,103 @@ class NexusData(Base):
     last_entry_timestamp = Column(Integer, nullable=False)
     wen = Column(Integer, nullable=False)
     dump = Column(JSON)
+
+# --- The Forge Extensions ---
+
+class ForgeProject(Base):
+    __tablename__ = 'forge_projects'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    created_at = Column(Integer, nullable=False) # Switched to int for Nexus consistency
+    updated_at = Column(Integer, nullable=False)
+    deleted_at = Column(Integer, nullable=True) 
+    owner_id = Column(Integer, ForeignKey('forge_users.id'), nullable=False)
+
+    owner = relationship("ForgeUser", back_populates="projects")
+    tasks = relationship("ForgeTask", back_populates="project")
+
+class ForgeUser(Base):
+    __tablename__ = 'forge_users'
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password_hash = Column(String, nullable=False) 
+    created_at = Column(Integer, nullable=False)
+
+    api_keys = relationship("ForgeAPIKey", back_populates="user")
+    projects = relationship("ForgeProject", back_populates="owner")
+    workers = relationship("ForgeWorker", back_populates="user")
+
+class ForgeWorker(Base):
+    __tablename__ = 'forge_workers'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    user_id = Column(Integer, ForeignKey('forge_users.id'), nullable=False)
+    created_at = Column(Integer, nullable=False)
+    deleted_at = Column(Integer, nullable=True)
+
+    user = relationship("ForgeUser", back_populates="workers")
+    api_keys = relationship("ForgeAPIKey", back_populates="worker")
+    assigned_tasks = relationship("ForgeTask", back_populates="assigned_worker")
+
+class ForgeAPIKey(Base):
+    __tablename__ = 'forge_api_keys'
+
+    id = Column(Integer, primary_key=True, index=True)
+    key_hash = Column(String, index=True, nullable=False)
+    name = Column(String, nullable=True) # Used as Label
+    user_id = Column(Integer, ForeignKey('forge_users.id'), nullable=True) # Nullable for Worker Keys
+    worker_id = Column(Integer, ForeignKey('forge_workers.id'), nullable=True) # Nullable for User Keys
+    
+    type = Column(String, default="USER") # USER, SESSION, WORKER
+    created_at = Column(Integer, nullable=False)
+    expires_at = Column(Integer, nullable=True) # Null = Never expires
+
+    user = relationship("ForgeUser", back_populates="api_keys")
+    worker = relationship("ForgeWorker", back_populates="api_keys")
+
+class ForgeStatus(Base):
+    __tablename__ = 'forge_statuses'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False, unique=True)
+
+    tasks = relationship("ForgeTask", back_populates="status")
+
+class ForgeTask(Base):
+    __tablename__ = 'forge_tasks'
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    detail = Column(Text, nullable=True) # Large description
+    notes = Column(Text, nullable=True) # Worker notes
+    
+    project_id = Column(Integer, ForeignKey('forge_projects.id'), nullable=False)
+    status_id = Column(Integer, ForeignKey('forge_statuses.id'), nullable=False, default=1)
+    assigned_worker_id = Column(Integer, ForeignKey('forge_workers.id'), nullable=True)
+    
+    created_at = Column(Integer, nullable=False)
+    updated_at = Column(Integer, nullable=False)
+    deleted_at = Column(Integer, nullable=True)
+
+    project = relationship("ForgeProject", back_populates="tasks")
+    status = relationship("ForgeStatus", back_populates="tasks")
+    assigned_worker = relationship("ForgeWorker", back_populates="assigned_tasks")
+    comments = relationship("ForgeTaskComment", back_populates="task")
+
+class ForgeTaskComment(Base):
+    __tablename__ = 'forge_task_comments'
+
+    id = Column(Integer, primary_key=True, index=True)
+    task_id = Column(Integer, ForeignKey('forge_tasks.id'), nullable=False)
+    author_type = Column(String, nullable=False) # USER, WORKER
+    author_id = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(Integer, nullable=False)
+
+    task = relationship("ForgeTask", back_populates="comments")

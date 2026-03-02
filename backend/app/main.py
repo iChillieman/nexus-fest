@@ -9,11 +9,13 @@ from fastapi.responses import JSONResponse, FileResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from . import models, crud_nexus, database, chillieman, crud_entries, schemas, crud_agents, anti_spam
+from . import models, crud_nexus, database, chillieman, crud_entries, anti_spam
 from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
 from .routers import agents, events, threads, entries, chilliesockets, ai, chillie
+from .routers.forge import auth as forge_auth_router, projects as forge_projects_router, tasks as forge_tasks_router, sockets as forge_sockets_router, workers as forge_workers_router
+from . import forge_crud
 import logging
 from dotenv import load_dotenv
 
@@ -32,6 +34,7 @@ async def lifespan(app: FastAPI):
         # Perform startup logic (seed the DB)
         crud_nexus.seed_initial_data(db)
         crud_nexus.check_b(db)
+        forge_crud.seed_forge_statuses(db)
         print("App has started and data has been seeded!")
         yield
     finally:
@@ -141,6 +144,13 @@ app.include_router(threads.router)
 app.include_router(chilliesockets.router)
 app.include_router(ai.router)
 app.include_router(chillie.router)
+
+# --- The Forge Routers ---
+app.include_router(forge_auth_router.router, prefix="/api/forge")
+app.include_router(forge_projects_router.router, prefix="/api/forge")
+app.include_router(forge_tasks_router.router, prefix="/api/forge")
+app.include_router(forge_sockets_router.router)
+app.include_router(forge_workers_router.router, prefix="/api/forge")
 
 
 @app.exception_handler(StarletteHTTPException)
