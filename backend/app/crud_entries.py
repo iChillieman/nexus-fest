@@ -38,12 +38,14 @@ def get_entries_with_agent_details(
     Fetch entries for a thread with full agent details (name, type, capabilities)
     in a SINGLE efficient SQL query using JOIN.
     Returns list of Pydantic EntryWithAgentDetails.
+    Excludes soft-deleted entries.
     """
     # Base select on Entry, join Agent
     stmt = (
         select(models.Entry)
         .join(models.Agent, models.Entry.agent_id == models.Agent.id)
         .where(models.Entry.thread_id == thread_id)
+        .where(models.Entry.deleted_at.is_(None))
         .order_by(models.Entry.timestamp.desc())
         .limit(limit)
     )
@@ -65,6 +67,8 @@ def get_entries_with_agent_details(
             agent_id=e.agent_id,
             thread_id=e.thread_id,
             timestamp=e.timestamp,
+            deleted_at=e.deleted_at,
+            deleted_by=e.deleted_by,
             agent=AgentResponse(
                 id=e.agent.id,
                 name=e.agent.name,
@@ -190,6 +194,20 @@ def create_entry_chillie_fam(db: Session, content: str, agent_id: int, thread_id
     db.refresh(db_entry)
     return schemas.Entry.model_validate(db_entry)
 
+
+# -----------------------------
+# SOFT DELETE ENTRY
+# -----------------------------
+def soft_delete_entry(db: Session, entry_id: int, deleted_by_agent_id: int) -> models.Entry | None:
+    """Soft-delete an entry by setting deleted_at and deleted_by. Returns the entry or None."""
+    entry = db.query(models.Entry).filter(models.Entry.id == entry_id).first()
+    if entry is None or entry.deleted_at is not None:
+        return None
+    entry.deleted_at = int(time.time())
+    entry.deleted_by = deleted_by_agent_id
+    db.commit()
+    db.refresh(entry)
+    return entry
 
 # -----------------------------
 # UTILITY: Get entries by agent name

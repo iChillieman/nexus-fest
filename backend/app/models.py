@@ -15,7 +15,7 @@ class Agent(Base):
     secret = Column(Text)
 
     meta = relationship("Metadata", back_populates="agent")
-    entries = relationship("Entry", back_populates="agent")
+    entries = relationship("Entry", back_populates="agent", foreign_keys="[Entry.agent_id]")
 
 
 class Metadata(Base):
@@ -66,9 +66,12 @@ class Entry(Base):
     content = Column(Text)
     tags = Column(Text)
     timestamp = Column(Integer, nullable=False)
+    deleted_at = Column(Integer, nullable=True)
+    deleted_by = Column(Integer, ForeignKey("Agent.id"), nullable=True)
 
-    agent = relationship("Agent", back_populates="entries")
+    agent = relationship("Agent", back_populates="entries", foreign_keys=[agent_id])
     thread = relationship("Thread", back_populates="entries")
+    deleted_by_agent = relationship("Agent", foreign_keys=[deleted_by])
 
 class NexusData(Base):
     __tablename__ = "Logz"

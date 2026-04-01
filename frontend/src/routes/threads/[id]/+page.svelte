@@ -21,6 +21,8 @@
   let lowestEntryId = 0;
   let hasMore = true;
   let glitching = false;
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_DELAY = 30000; // 30s max backoff
 
   // Define the constants in your script
   const THRESHOLDS = {
@@ -57,6 +59,65 @@
         behavior: "smooth",
       });
     }
+  }
+
+  function connectWebSocket() {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    let host = window.location.host;
+    if (host.startsWith("localhost")) {
+      host = "localhost:8000";
+    }
+
+    if (socket && socket.readyState <= WebSocket.OPEN) {
+      socket.close();
+    }
+
+    socket = new WebSocket(`${protocol}://${host}/ws/threads/${threadId}`);
+
+    socket.onopen = () => {
+      console.log("Nexus Signal Locked (WS Open)");
+      reconnectAttempts = 0;
+    };
+
+    socket.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+
+      // Handle deletion broadcasts
+      if (data.type === "ENTRY_DELETED") {
+        entries = entries.map((e) =>
+          e.id === data.entry_id
+            ? { ...e, deleted_at: Date.now(), _removed: true }
+            : e,
+        );
+        return;
+      }
+
+      // Normal new entry
+      entries = [...entries, data];
+      await scrollToBottom();
+    };
+
+    socket.onclose = () => {
+      console.log("Nexus Signal Lost (WS Closed)");
+      scheduleReconnect();
+    };
+
+    socket.onerror = () => {
+      console.log("Nexus Signal Error");
+      socket.close();
+    };
+  }
+
+  function scheduleReconnect() {
+    if (!isThreadActive) return;
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+    reconnectAttempts++;
+    console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts})...`);
+    setTimeout(() => {
+      if (!socket || socket.readyState === WebSocket.CLOSED) {
+        connectWebSocket();
+      }
+    }, delay);
   }
 
   async function loadInitialEntries() {
@@ -126,22 +187,10 @@
         initialScrollDone = true;
       }
 
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      let host = window.location.host;
-      if (host.startsWith("localhost")) {
-        host = "localhost:8000";
-      }
-      socket = new WebSocket(`${protocol}://${host}/ws/threads/${threadId}`);
-
-      socket.onmessage = async (event) => {
-        const newEntry = JSON.parse(event.data);
-        entries = [...entries, newEntry];
-        // Trigger Smart Scroll
-        await scrollToBottom();
+      connectWebSocket();
+      return () => {
+        if (socket) socket.close();
       };
-
-      socket.onclose = () => console.log("Nexus Signal Lost (WS Closed)");
-      return () => socket.close();
     }
   }
 
@@ -214,7 +263,25 @@
     );
 
     if (topObserverTarget) observer.observe(topObserverTarget);
-    return () => observer.disconnect();
+
+    // Reconnect WebSocket when user returns from background (phone/tab switch)
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === "visible" &&
+        socket &&
+        socket.readyState !== WebSocket.OPEN &&
+        isThreadActive
+      ) {
+        console.log("Tab visible again - reconnecting WebSocket...");
+        connectWebSocket();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   });
 
   const LIMIT = 334; // The "Impossible" boundary + 1
@@ -412,7 +479,15 @@
                 minute: "2-digit",
               })}
             </div>
-            <div class="text-white break-words">{entry.content}</div>
+            {#if entry.deleted_at || entry._removed}
+              <div
+                class="text-red-400/70 italic text-sm font-mono"
+              >
+                ⚠ This entry was removed for abuse.
+              </div>
+            {:else}
+              <div class="text-white break-words">{entry.content}</div>
+            {/if}
           </div>
         {/each}
       </div>

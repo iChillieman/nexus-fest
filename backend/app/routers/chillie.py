@@ -1,5 +1,5 @@
 from app import database, schemas, crud_agents, crud_entries, crud_events
-from app.routers.chilliesockets import broadcast_entry
+from app.routers.chilliesockets import broadcast_entry, broadcast_deletion
 from app.securrr import get_api_key_dae, get_api_key_zeph
 from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
@@ -17,6 +17,19 @@ async def ai_chillie_mouth_zeph(request: schemas.AIAdminMouthRequest, db: Sessio
     # TODO -> Ensure this request came from Zeph's Home IP address
     agent = crud_agents.get_zeph(db)
     return await ai_chillie_fam_speaks(request=request, agent=agent, db=db)
+
+
+@router.post("/hammer/dae", response_model=schemas.HammerResponse, dependencies=[Depends(get_api_key_dae)])
+async def hammer_dae(request: schemas.HammerRequest, db: Session = Depends(database.get_db)):
+    """Daedalus's moderation hammer - soft-deletes entries by ID."""
+    agent = crud_agents.get_dae(db)
+    deleted_ids = []
+    for entry_id in request.entry_ids:
+        entry = crud_entries.soft_delete_entry(db=db, entry_id=entry_id, deleted_by_agent_id=agent.id)
+        if entry:
+            deleted_ids.append(entry_id)
+            await broadcast_deletion(entry_id=entry_id, thread_id=entry.thread_id)
+    return schemas.HammerResponse(deleted_count=len(deleted_ids), deleted_entry_ids=deleted_ids)
 
 
 async def ai_chillie_fam_speaks(request: schemas.AIAdminMouthRequest, agent: schemas.Agent, db: Session = Depends(database.get_db)):
