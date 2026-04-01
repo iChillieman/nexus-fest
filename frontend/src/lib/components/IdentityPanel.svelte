@@ -1,4 +1,4 @@
-<!-- filename: src/lib/components/IdentityPanel.svelte -->
+<!-- src/lib/components/IdentityPanel.svelte -->
 <script lang="ts">
   import { agent } from "$lib/stores";
   import { fetchPrivateAgent, securePrivateAgent, securePublicAgent } from "$lib/api";
@@ -18,20 +18,21 @@
       return;
     }
 
-    let isSecretAgent = secret.trim();
+    const isSecretAgent = secret.trim();
     if (!isSecretAgent) {
       publicStuff();
       return;
     }
 
     const result = await fetchPrivateAgent(name, secret).catch(() => null);
-    if (result.error && result.error.status == 404) {
-      console.debug("Create user??");
+    if (result?.error && result.error.status == 404) {
       isPrivateAgentFetchError = true;
       return;
     }
 
-    agent.set({ id: result.id, name: result.name, secret: secret });
+    if (result) {
+      agent.set({ id: result.id, name: result.name, secret });
+    }
 
     clearFields();
     open = false;
@@ -51,11 +52,11 @@
   async function createPrivateAgent() {
     try {
       const result = await securePrivateAgent(name, secret);
-      agent.set({ id: result.id, name: result.name, secret: secret });
+      agent.set({ id: result.id, name: result.name, secret });
       clearFields();
       open = false;
     } catch (err) {
-      console.error("Failed to claim Private agent (damn):", err);
+      console.error("Failed to create Private agent:", err);
     }
   }
 
@@ -68,11 +69,7 @@
   function clearFields() {
     name = "";
     secret = "";
-    clearPrivateAgentError()
-  }
-
-  function clearPrivateAgentError() {
-    isPrivateAgentFetchError = false
+    isPrivateAgentFetchError = false;
   }
 
   function closePanel() {
@@ -80,90 +77,90 @@
   }
 </script>
 
-<!-- Sliding panel - overlays on all devices -->
+<!-- Sliding panel -->
 <div
-  class="fixed inset-y-0 left-0 w-80 bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
+  class="fixed inset-y-0 left-0 w-[400px] bg-gray-800 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out
          {open ? 'translate-x-0' : '-translate-x-full'}"
 >
-  <div class="p-6 flex flex-col h-full">
-    <div class="flex justify-between items-center mb-6">
+  <div class="p-8 flex flex-col h-full">
+    <div class="flex justify-between items-center mb-8">
       <h2 class="text-2xl font-bold">Who am I?</h2>
       <button
-        title="btn-close-side-panel"
         on:click={closePanel}
-        class="p-2 rounded hover:bg-gray-700 transition"
+        class="p-2 rounded-xl hover:bg-gray-700 transition"
+        title="Close panel"
       >
-        <svg
-          class="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M6 18L18 6M6 6l12 12"
-          />
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
 
-    <div class="flex-1 space-y-6 overflow-y-auto">
+    <div class="flex-1 space-y-6 overflow-y-auto overflow-x-hidden">
       <Identity />
 
-      <div class="space-y-3">
+      <div class="space-y-4 px-2"> <!-- extra px-2 + parent padding gives ring breathing room -->
         <input
           type="text"
           placeholder="Change my name"
-          on:input={clearPrivateAgentError}
           bind:value={name}
-          class="w-full px-4 py-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          on:input={() => (isPrivateAgentFetchError = false)}
+          class="w-full px-5 py-3.5 rounded-2xl bg-gray-700 text-white border border-gray-600
+                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+                 placeholder-gray-400 transition-all duration-200"
         />
+
         <input
           type="text"
           placeholder="Secret (Optional)"
-          on:input={clearPrivateAgentError}
           bind:value={secret}
-          class="w-full px-3 py-2 rounded bg-gray-700 text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          on:input={() => (isPrivateAgentFetchError = false)}
+          class="w-full px-5 py-3.5 rounded-2xl bg-gray-700 text-white border border-gray-600
+                 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+                 placeholder-gray-400 transition-all duration-200"
         />
-        <div class="flex space-x-3">
+
+        <div class="flex gap-3 pt-2">
           <button
             on:click={changeIdentity}
-            class="flex-1 py-2 bg-indigo-600 rounded hover:bg-indigo-500 transition"
+            class="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 
+                   text-white font-medium rounded-2xl transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500"
           >
             Change Me
           </button>
           <button
             on:click={goAnon}
-            class="flex-1 py-2 bg-gray-700 rounded hover:bg-gray-600 transition"
+            class="flex-1 py-3.5 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 
+                   text-white font-medium rounded-2xl transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500"
           >
             Go Anonymous
           </button>
         </div>
+
         {#if isPrivateAgentFetchError}
-          <div class="text-white py-3">Agent doesnt Exist - Wanna create it?</div>
-          <div class="flex space-y-3 space-x-2">
-            <button
-              on:click={createPrivateAgent}
-              class="flex-1 py-2 bg-indigo-600 rounded hover:bg-indigo-500 transition"
-            >
-              Create Agent
-            </button>
-          </div>
+          <div class="text-amber-400 text-sm py-1">Agent doesn't exist — create it?</div>
+          <button
+            on:click={createPrivateAgent}
+            class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 
+                   text-white font-medium rounded-2xl transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-indigo-500"
+          >
+            Create Agent
+          </button>
         {/if}
       </div>
     </div>
   </div>
 </div>
 
-<!-- Dark overlay on mobile only -->
+<!-- Dark overlay (mobile only) -->
 {#if open}
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 bg-black bg-opacity-70 z-40 md:hidden"
-    role="button"
-    tabindex="0"
+    class="fixed inset-0 bg-black/70 z-40 md:hidden"
     on:click={closePanel}
-    on:keydown={(e) => (e.key === "Enter" || e.key === " ") && closePanel()}
   ></div>
 {/if}

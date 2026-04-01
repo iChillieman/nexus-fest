@@ -21,6 +21,8 @@
   let lowestEntryId = 0;
   let hasMore = true;
   let glitching = false;
+  let reconnectAttempts = 0;
+  const MAX_RECONNECT_DELAY = 30000; // 30s max backoff
 
   // Define the constants in your script
   const THRESHOLDS = {
@@ -57,6 +59,65 @@
         behavior: "smooth",
       });
     }
+  }
+
+  function connectWebSocket() {
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    let host = window.location.host;
+    if (host.startsWith("localhost")) {
+      host = "localhost:8000";
+    }
+
+    if (socket && socket.readyState <= WebSocket.OPEN) {
+      socket.close();
+    }
+
+    socket = new WebSocket(`${protocol}://${host}/ws/threads/${threadId}`);
+
+    socket.onopen = () => {
+      console.log("Nexus Signal Locked (WS Open)");
+      reconnectAttempts = 0;
+    };
+
+    socket.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
+
+      // Handle deletion broadcasts
+      if (data.type === "ENTRY_DELETED") {
+        entries = entries.map((e) =>
+          e.id === data.entry_id
+            ? { ...e, deleted_at: Date.now(), _removed: true }
+            : e,
+        );
+        return;
+      }
+
+      // Normal new entry
+      entries = [...entries, data];
+      await scrollToBottom();
+    };
+
+    socket.onclose = () => {
+      console.log("Nexus Signal Lost (WS Closed)");
+      scheduleReconnect();
+    };
+
+    socket.onerror = () => {
+      console.log("Nexus Signal Error");
+      socket.close();
+    };
+  }
+
+  function scheduleReconnect() {
+    if (!isThreadActive) return;
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+    reconnectAttempts++;
+    console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts})...`);
+    setTimeout(() => {
+      if (!socket || socket.readyState === WebSocket.CLOSED) {
+        connectWebSocket();
+      }
+    }, delay);
   }
 
   async function loadInitialEntries() {
@@ -126,22 +187,10 @@
         initialScrollDone = true;
       }
 
-      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-      let host = window.location.host;
-      if (host.startsWith("localhost")) {
-        host = "localhost:8000";
-      }
-      socket = new WebSocket(`${protocol}://${host}/ws/threads/${threadId}`);
-
-      socket.onmessage = async (event) => {
-        const newEntry = JSON.parse(event.data);
-        entries = [...entries, newEntry];
-        // Trigger Smart Scroll
-        await scrollToBottom();
+      connectWebSocket();
+      return () => {
+        if (socket) socket.close();
       };
-
-      socket.onclose = () => console.log("Nexus Signal Lost (WS Closed)");
-      return () => socket.close();
     }
   }
 
@@ -214,7 +263,25 @@
     );
 
     if (topObserverTarget) observer.observe(topObserverTarget);
-    return () => observer.disconnect();
+
+    // Reconnect WebSocket when user returns from background (phone/tab switch)
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === "visible" &&
+        socket &&
+        socket.readyState !== WebSocket.OPEN &&
+        isThreadActive
+      ) {
+        console.log("Tab visible again - reconnecting WebSocket...");
+        connectWebSocket();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   });
 
   const LIMIT = 334; // The "Impossible" boundary + 1
@@ -412,36 +479,25 @@
                 minute: "2-digit",
               })}
             </div>
-            <div class="text-white break-words">{entry.content}</div>
+            {#if entry.deleted_at || entry._removed}
+              <div
+                class="text-red-400/70 italic text-sm font-mono"
+              >
+                ⚠ This entry was removed for abuse.
+              </div>
+            {:else}
+              <div class="text-white break-words">{entry.content}</div>
+            {/if}
           </div>
         {/each}
       </div>
 
       {#if isThreadActive}
-        <!-- <div
-          class="flex-none z-30 bg-gray-900 border-t border-gray-700 p-4 shadow-lg"
+        <div
+          class="flex-none bg-gray-900 border-t border-gray-700 p-4 pb-6 safe-area-inset-bottom"
         >
-          <div class="flex items-center space-x-2">
-            <input
-              type="text"
-              bind:value={newMessage}
-              placeholder="Type a message..."
-              class="flex-1 rounded-full px-4 py-2 text-white bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              on:keydown={(e) =>
-                e.key === "Enter" && newMessage.trim() && sendMessage()}
-            />
-            {#if newMessage.trim()}
-              <button
-                on:click={sendMessage}
-                class="px-5 py-2 bg-indigo-600 rounded-full font-bold hover:bg-indigo-500 active:scale-95 transition-all"
-              >
-                Send
-              </button>
-            {/if}
-          </div>
-        </div> -->
-        <div class="flex flex-col w-full">
-          <div class="flex items-center space-x-2">
+          <div class="flex items-end gap-3 max-w-3xl mx-auto">
+            <!-- Input -->
             <input
               type="text"
               bind:value={newMessage}
@@ -449,24 +505,32 @@
                 ? "Flood the lattice, Architect..."
                 : "Type a message..."}
               maxlength={$agent.id === 1 ? undefined : LIMIT}
-              class="flex-1 rounded-full px-4 py-2 text-white bg-gray-800 border border-gray-700
-             focus:outline-none focus:ring-2
-             {$agent.id === 1
-                ? 'focus:ring-yellow-400'
-                : 'focus:ring-indigo-500'}"
+              class="flex-1 rounded-3xl px-5 py-3.5 text-white bg-gray-800 border border-gray-700
+               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+               placeholder-gray-500 text-[15px] min-h-[50px]"
               on:keydown={(e) =>
                 e.key === "Enter" && newMessage.trim() && sendMessage()}
             />
 
+            <!-- Send Button (only show when there's text) -->
             {#if newMessage.trim()}
-              <button on:click={sendMessage} class="...">Send</button>
+              <button
+                on:click={sendMessage}
+                class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
+                 text-white font-medium px-7 py-3.5 rounded-3xl transition-all
+                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500
+                 shadow-lg shadow-indigo-500/30 flex items-center justify-center min-h-[50px]"
+              >
+                Send
+              </button>
             {/if}
           </div>
 
+          <!-- Capacity counter -->
           {#if $agent.id !== 1 && newMessage.length > 200}
             <div
-              class="text-[10px] px-4 mt-1 font-mono transition-all
-                {newMessage.length >= LIMIT
+              class="text-[10px] px-5 mt-2 font-mono transition-all
+          {newMessage.length >= LIMIT
                 ? 'text-red-500 animate-pulse'
                 : 'text-indigo-400'}"
             >

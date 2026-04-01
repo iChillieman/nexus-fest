@@ -124,6 +124,8 @@ class Entry(EntryBase):
     agent_id: int
     thread_id: int
     timestamp: int
+    deleted_at: Optional[int] = None
+    deleted_by: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -184,6 +186,15 @@ class AIAdminMouthRequest(BaseModel):
 
     class Config:
         from_attributes = True
+
+# Hammer (Moderation)
+class HammerRequest(BaseModel):
+    entry_ids: List[int]
+    reason: Optional[str] = None
+
+class HammerResponse(BaseModel):
+    deleted_count: int
+    deleted_entry_ids: List[int]
 
 # ChillieLogging
 class NexusData(BaseModel):

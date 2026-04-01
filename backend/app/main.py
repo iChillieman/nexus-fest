@@ -24,6 +24,7 @@ from .routers.chilliesockets import broadcast_entry
 load_dotenv()
 
 models.Base.metadata.create_all(bind=engine)
+database.migrate_entry_soft_delete()
 
 logger = logging.getLogger("nexusfest")
 

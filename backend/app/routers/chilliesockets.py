@@ -27,3 +27,14 @@ async def broadcast_entry(entry: dict, thread_id: int):
     if thread_id in thread_connections:
         for ws in thread_connections[thread_id]:
             await ws.send_text(json.dumps(entry))
+
+async def broadcast_deletion(entry_id: int, thread_id: int):
+    """Broadcast a deletion event to all connected clients on a thread."""
+    payload = {
+        "type": "ENTRY_DELETED",
+        "entry_id": entry_id,
+        "thread_id": thread_id
+    }
+    if thread_id in thread_connections:
+        for ws in thread_connections[thread_id]:
+            await ws.send_text(json.dumps(payload))
