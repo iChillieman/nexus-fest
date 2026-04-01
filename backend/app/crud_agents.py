@@ -77,7 +77,7 @@ def get_dae(db: Session):
     stmt = select(models.Agent).where(
         models.Agent.name == DBConstants.NAME_DAE,
         models.Agent.secret.isnot(None),
-        models.Agent.type == DBConstants.TYPE_ZEPH
+        models.Agent.type == DBConstants.TYPE_DAE
     )
     return schemas.Agent.model_validate(db.execute(stmt).scalar_one_or_none())
 

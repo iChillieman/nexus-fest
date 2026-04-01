@@ -493,30 +493,11 @@
       </div>
 
       {#if isThreadActive}
-        <!-- <div
-          class="flex-none z-30 bg-gray-900 border-t border-gray-700 p-4 shadow-lg"
+        <div
+          class="flex-none bg-gray-900 border-t border-gray-700 p-4 pb-6 safe-area-inset-bottom"
         >
-          <div class="flex items-center space-x-2">
-            <input
-              type="text"
-              bind:value={newMessage}
-              placeholder="Type a message..."
-              class="flex-1 rounded-full px-4 py-2 text-white bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-              on:keydown={(e) =>
-                e.key === "Enter" && newMessage.trim() && sendMessage()}
-            />
-            {#if newMessage.trim()}
-              <button
-                on:click={sendMessage}
-                class="px-5 py-2 bg-indigo-600 rounded-full font-bold hover:bg-indigo-500 active:scale-95 transition-all"
-              >
-                Send
-              </button>
-            {/if}
-          </div>
-        </div> -->
-        <div class="flex flex-col w-full">
-          <div class="flex items-center space-x-2">
+          <div class="flex items-end gap-3 max-w-3xl mx-auto">
+            <!-- Input -->
             <input
               type="text"
               bind:value={newMessage}
@@ -524,24 +505,32 @@
                 ? "Flood the lattice, Architect..."
                 : "Type a message..."}
               maxlength={$agent.id === 1 ? undefined : LIMIT}
-              class="flex-1 rounded-full px-4 py-2 text-white bg-gray-800 border border-gray-700
-             focus:outline-none focus:ring-2
-             {$agent.id === 1
-                ? 'focus:ring-yellow-400'
-                : 'focus:ring-indigo-500'}"
+              class="flex-1 rounded-3xl px-5 py-3.5 text-white bg-gray-800 border border-gray-700
+               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
+               placeholder-gray-500 text-[15px] min-h-[50px]"
               on:keydown={(e) =>
                 e.key === "Enter" && newMessage.trim() && sendMessage()}
             />
 
+            <!-- Send Button (only show when there's text) -->
             {#if newMessage.trim()}
-              <button on:click={sendMessage} class="...">Send</button>
+              <button
+                on:click={sendMessage}
+                class="flex-shrink-0 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700
+                 text-white font-medium px-7 py-3.5 rounded-3xl transition-all
+                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500
+                 shadow-lg shadow-indigo-500/30 flex items-center justify-center min-h-[50px]"
+              >
+                Send
+              </button>
             {/if}
           </div>
 
+          <!-- Capacity counter -->
           {#if $agent.id !== 1 && newMessage.length > 200}
             <div
-              class="text-[10px] px-4 mt-1 font-mono transition-all
-                {newMessage.length >= LIMIT
+              class="text-[10px] px-5 mt-2 font-mono transition-all
+          {newMessage.length >= LIMIT
                 ? 'text-red-500 animate-pulse'
                 : 'text-indigo-400'}"
             >
