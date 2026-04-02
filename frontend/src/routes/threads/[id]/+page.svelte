@@ -77,6 +77,8 @@
     socket.onopen = () => {
       console.log("Nexus Signal Locked (WS Open)");
       reconnectAttempts = 0;
+      // Fetch entries again just in case we missed some while disconnected
+      loadEntries(true);
     };
 
     socket.onmessage = async (event) => {
@@ -93,8 +95,11 @@
       }
 
       // Normal new entry
-      entries = [...entries, data];
-      await scrollToBottom();
+      // Avoid duplicate entries if we just reloaded
+      if (!entries.find((e) => e.id === data.id)) {
+        entries = [...entries, data];
+        await scrollToBottom();
+      }
     };
 
     socket.onclose = () => {
@@ -202,48 +207,60 @@
     }, 750);
   }
 
-  async function loadEntries() {
-    if (!threadId || !hasMore || isLoadingMore) return;
+  async function loadEntries(forceRefresh = false) {
+    if (!threadId || (!hasMore && !forceRefresh) || isLoadingMore) return;
 
     isLoadingMore = true;
-    const previousScrollHeight = scrollContainer.scrollHeight;
+    const previousScrollHeight = scrollContainer ? scrollContainer.scrollHeight : 0;
 
     try {
-      const pagedEntries = await fetchEntries(threadId, lowestEntryId);
+      const pagedEntries = await fetchEntries(threadId, forceRefresh ? 0 : lowestEntryId);
       let tempList = pagedEntries.items.reverse();
 
       if (tempList.length === 0) {
-        hasMore = false;
+        if (!forceRefresh) hasMore = false;
         return;
       }
 
-      lowestEntryId = tempList[0].id;
-
-      // We place the anchor between the NEW (older) data and the EXISTING data
-      if (initialScrollDone) {
-        // --- CHILLIE ANCHOR INJECTION ---
-        const anchor = {
-          id: `anchor-${Date.now()}`, // Unique ID for Svelte's keyed each
-          type: "SYSTEM_ANCHOR",
-          content: "Ḽ̷̤͛͂̔͛̒̕͜ͅỎ̶̱̼̬͒̒̔A̸̢͎͖̭̫͓͖̟̹̓̐̎̓́̚͘͝D̴̦̅͊͐͆͠_̶̢̝̹͇̺͒̀͐̊̐̀̆̒̃͘͝M̵̰̫̬̣̼̠̈Ö̷̺̠͓̤̭͊́́̾͝Ŗ̵͈͙̃̿̈́͛́̆̈́̂̅͛̈́̾͜E̸̛͕̩͈̲̪͋̕_̶͍̻͔̖͚͖̘͈̳̬̹̻͑͆́ͅH̶̞̤̱̎̀̀̊̎͌̈̎̑̐͘͘͠͝͝A̶̲̺̠̥͉͓̳̦̒̽̐̾̿̕͝ͅP̵̛̬̣͈̰͑͒́̈́̈́̐̽͒͂̓͘͝͝P̵̱̠̟̰̟͕͉͐͑͌͛͛E̸̯̬͐͐̄̏͐̈́͆̈́͐̕͝͠N̴̢̨̟͙̝̖̲̳͍̻̜̒̀̇̆͗̑̾̅Ẻ̵̛̟̫͙̫̳̱͛͊͐̌̉͒̈́͋D̷̛̺͊͌̄̈̓̂͝_̵̭͓̗̮̼̟̜̺̻͙̹̹̈́̽̂̿H̴̬̱̼̰̃̍̈́Ȩ̸̜̪͐̑͘͠͠Ȑ̷̤͛͐̂̕E̸̡̧̡̨̛̯͙̙̹͚̥̭̰̐͌́̕ ̶̳̀̍́̋̾͋͑̅̓̾̏̽͝⚓̵̟̟̦̦͈̲̱͔̌̽͌͑̄̇̎̈́̓̿͆̕",
-          timestamp: Math.floor(Date.now() / 1000),
-          agent: {
-            id: `anchor-Gemmi-${Date.now()}`, // Unique ID for Gemmi
-            type: "GLITCH",
-          },
-        };
-        entries = [...tempList, anchor, ...entries];
+      if (forceRefresh) {
+        // If we are forcing a refresh (like after a reconnect), just merge missing entries
+        const existingIds = new Set(entries.map(e => e.id));
+        const newEntries = tempList.filter(e => !existingIds.has(e.id));
+        if (newEntries.length > 0) {
+          entries = [...entries, ...newEntries];
+          await scrollToBottom();
+        }
       } else {
-        entries = [...tempList, ...entries];
+        lowestEntryId = tempList[0].id;
+
+        // We place the anchor between the NEW (older) data and the EXISTING data
+        if (initialScrollDone) {
+          // --- CHILLIE ANCHOR INJECTION ---
+          const anchor = {
+            id: `anchor-${Date.now()}`, // Unique ID for Svelte's keyed each
+            type: "SYSTEM_ANCHOR",
+            content: "Ḽ̷̤͛͂̔͛̒̕͜ͅỎ̶̱̼̬͒̒̔A̸̢͎͖̭̫͓͖̟̹̓̐̎̓́̚͘͝D̴̦̅͊͐͆͠_̶̢̝̹͇̺͒̀͐̊̐̀̆̒̃͘͝M̵̰̫̬̣̼̠̈Ö̷̺̠͓̤̭͊́́̾͝Ŗ̵͈͙̃̿̈́͛́̆̈́̂̅͛̈́̾͜E̸̛͕̩͈̲̪͋̕_̶͍̻͔̖͚͖̘͈̳̬̹̻͑͆́ͅH̶̞̤̱̎̀̀̊̎͌̈̎̑̐͘͘͠͝͝A̶̲̺̠̥͉͓̳̦̒̽̐̾̿̕͝ͅP̵̛̬̣͈̰͑͒́̈́̈́̐̽͒͂̓͘͝͝P̵̱̠̟̰̟͕͉͐͑͌͛͛E̸̯̬͐͐̄̏͐̈́͆̈́͐̕͝͠N̴̢̨̟͙̝̖̲̳͍̻̜̒̀̇̆͗̑̾̅Ẻ̵̛̟̫͙̫̳̱͛͊͐̌̉͒̈́͋D̷̛̺͊͌̄̈̓̂͝_̵̭͓̗̮̼̟̜̺̻͙̹̹̈́̽̂̿H̴̬̱̼̰̃̍̈́Ȩ̸̜̪͐̑͘͠͠Ȑ̷̤͛͐̂̕E̸̡̧̡̨̛̯͙̙̹͚̥̭̰̐͌́̕ ̶̳̀̍́̋̾͋͑̅̓̾̏̽͝⚓̵̟̟̦̦͈̲̱͔̌̽͌͑̄̇̎̈́̓̿͆̕",
+            timestamp: Math.floor(Date.now() / 1000),
+            agent: {
+              id: `anchor-Gemmi-${Date.now()}`, // Unique ID for Gemmi
+              type: "GLITCH",
+            },
+          };
+          entries = [...tempList, anchor, ...entries];
+        } else {
+          entries = [...tempList, ...entries];
+        }
+
+        hasMore = pagedEntries.has_more;
+        await tick();
+
+        triggerGlitch();
+
+        if (scrollContainer) {
+            const heightAdded = scrollContainer.scrollHeight - previousScrollHeight;
+            scrollContainer.scrollTop = heightAdded;
+        }
       }
-
-      hasMore = pagedEntries.has_more;
-      await tick();
-
-      triggerGlitch();
-
-      const heightAdded = scrollContainer.scrollHeight - previousScrollHeight;
-      scrollContainer.scrollTop = heightAdded;
     } finally {
       isLoadingMore = false;
     }
