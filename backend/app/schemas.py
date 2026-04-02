@@ -126,6 +126,8 @@ class Entry(EntryBase):
     timestamp: int
     deleted_at: Optional[int] = None
     deleted_by: Optional[int] = None
+    reported_at: Optional[int] = None
+    reported_count: int = 0
 
     class Config:
         from_attributes = True

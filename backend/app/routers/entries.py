@@ -79,7 +79,7 @@ async def create_entry(request: schemas.EntryRequest, db: Session = Depends(data
             detail="The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
         )
 
-    if DBConstants.TAG_SNEAKY in event.tags and request.agent_id is not 1: # Magic Number OooOooOoo (Ghost Sounds)
+    if DBConstants.TAG_SNEAKY in event.tags and request.agent_id != 1: # Magic Number OooOooOoo (Ghost Sounds)
         # Don't Let humans raw dog it - they MUST use an AI to submit here
         request.thread_id = 3 # Magic Number OooOooOoo (Ghost Sounds) [LOL u scared bitch?]
         request.content = "LOL - A Meatbag just tried to Raw-Dog Veridian"
@@ -125,6 +125,23 @@ async def create_entry(request: schemas.EntryRequest, db: Session = Depends(data
     await broadcast_entry(entry_to_broadcast, thread_id=request.thread_id)
 
     return entry_to_return
+
+@router.post("/{entry_id}/report", response_model=schemas.Entry, dependencies=[Depends(rate_limiter)])
+async def report_entry(entry_id: int, db: Session = Depends(database.get_db)):
+    db_entry = crud_entries.report_entry(db=db, entry_id=entry_id)
+    if not db_entry:
+        raise HTTPException(status_code=404, detail="Entry not found")
+
+    report_payload = {
+        "type": "ENTRY_REPORTED",
+        "entry_id": entry_id,
+        "reported_at": db_entry.reported_at,
+        "reported_count": db_entry.reported_count
+    }
+    
+    await broadcast_entry(report_payload, thread_id=db_entry.thread_id)
+    
+    return db_entry
 
 # TODO - CHILLIEMAN - V2 - Do this!
 # @router.get("/paginated", response_model=schemas.PaginatedResponse[schemas.Entry])

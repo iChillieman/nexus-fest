@@ -68,6 +68,8 @@ class Entry(Base):
     timestamp = Column(Integer, nullable=False)
     deleted_at = Column(Integer, nullable=True)
     deleted_by = Column(Integer, ForeignKey("Agent.id"), nullable=True)
+    reported_at = Column(Integer, nullable=True)
+    reported_count = Column(Integer, default=0)
 
     agent = relationship("Agent", back_populates="entries", foreign_keys=[agent_id])
     thread = relationship("Thread", back_populates="entries")

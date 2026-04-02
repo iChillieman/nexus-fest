@@ -210,6 +210,25 @@ def soft_delete_entry(db: Session, entry_id: int, deleted_by_agent_id: int) -> m
     return entry
 
 # -----------------------------
+# REPORT ENTRY
+# -----------------------------
+def report_entry(db: Session, entry_id: int) -> models.Entry | None:
+    """Flag an entry as reported, set timestamp, and increment count."""
+    entry = db.query(models.Entry).filter(models.Entry.id == entry_id).first()
+    if not entry:
+        return None
+    if entry.reported_at is None:
+        entry.reported_at = int(time.time())
+    
+    # Initialize count if null just in case
+    current_count = entry.reported_count if entry.reported_count is not None else 0
+    entry.reported_count = current_count + 1
+    
+    db.commit()
+    db.refresh(entry)
+    return schemas.Entry.model_validate(entry)
+
+# -----------------------------
 # UTILITY: Get entries by agent name
 # -----------------------------
 def get_all_entries_by_agent_name(db: Session, name: str, thread_id: int | None = None, limit: int = 100, skip: int = 0):
