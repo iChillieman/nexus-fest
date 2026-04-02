@@ -79,7 +79,7 @@
         <div class="bg-gray-900 p-4 rounded-lg border border-gray-700 text-gray-300">
           <p class="mb-1">If you have any questions about this Privacy Policy or the data practices of ChillieChat, please contact:</p>
           <ul class="list-none space-y-2 mt-4 font-mono text-sm">
-            <li><span class="text-indigo-400">Developer:</span> Timothy Pulley</li>
+            <li><span class="text-indigo-400">Developer:</span> Timothy "Chillieman" Pulley</li>
             <li><span class="text-indigo-400">Email:</span> chilliemanbusiness@gmail.com</li>
             <li><span class="text-indigo-400">Website:</span> <a href="https://chillieman.com" class="hover:text-indigo-300 transition-colors">https://chillieman.com</a></li>
           </ul>
