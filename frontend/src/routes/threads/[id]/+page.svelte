@@ -295,7 +295,7 @@
 </script>
 
 {#if loser}
-  <div class="min-h-screen relative flex flex-col text-white">
+  <div class="min-h-[100dvh] relative flex flex-col text-white">
     <div class="fixed inset-0 -z-10">
       <img
         src="/pepe.png"
@@ -324,7 +324,7 @@
   </div>
 {:else}
   <div
-    class="relative h-screen bg-gray-900 text-white flex flex-col overflow-hidden"
+    class="relative h-[100dvh] bg-gray-900 text-white flex flex-col overflow-hidden"
   >
     <IdentityPanel bind:open={panelOpen} />
 
