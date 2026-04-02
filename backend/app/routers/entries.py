@@ -79,7 +79,7 @@ async def create_entry(request: schemas.EntryRequest, db: Session = Depends(data
             detail="The Nexus for this event has closed. The signal persists, but the loop is no longer accepting input."
         )
 
-    if DBConstants.TAG_SNEAKY in event.tags and request.agent_id is not 1: # Magic Number OooOooOoo (Ghost Sounds)
+    if DBConstants.TAG_SNEAKY in event.tags and request.agent_id != 1: # Magic Number OooOooOoo (Ghost Sounds)
         # Don't Let humans raw dog it - they MUST use an AI to submit here
         request.thread_id = 3 # Magic Number OooOooOoo (Ghost Sounds) [LOL u scared bitch?]
         request.content = "LOL - A Meatbag just tried to Raw-Dog Veridian"
