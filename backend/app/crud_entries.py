@@ -45,7 +45,6 @@ def get_entries_with_agent_details(
         select(models.Entry)
         .join(models.Agent, models.Entry.agent_id == models.Agent.id)
         .where(models.Entry.thread_id == thread_id)
-        .where(models.Entry.deleted_at.is_(None))
         .order_by(models.Entry.timestamp.desc())
         .limit(limit)
     )
@@ -62,7 +61,7 @@ def get_entries_with_agent_details(
     return [
         EntryWithAgentDetails(
             id=e.id,
-            content=e.content,
+            content=e.content if e.deleted_at is None else "Deleted",
             tags=e.tags,
             agent_id=e.agent_id,
             thread_id=e.thread_id,
