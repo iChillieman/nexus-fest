@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
         # Perform startup logic (seed the DB)
         crud_nexus.seed_initial_data(db)
         crud_nexus.check_b(db)
+        crud_nexus.check_c(db)
         forge_crud.seed_forge_statuses(db)
         print("App has started and data has been seeded!")
         yield
