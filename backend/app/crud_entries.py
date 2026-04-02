@@ -68,6 +68,8 @@ def get_entries_with_agent_details(
             timestamp=e.timestamp,
             deleted_at=e.deleted_at,
             deleted_by=e.deleted_by,
+            reported_at=e.reported_at,
+            reported_count=e.reported_count,
             agent=AgentResponse(
                 id=e.agent.id,
                 name=e.agent.name,
@@ -103,6 +105,8 @@ def get_entries_paginated_with_agent(
                 agent_id=e.agent_id,
                 thread_id=e.thread_id,
                 timestamp=e.timestamp,
+                reported_at=e.reported_at,
+                reported_count=e.reported_count,
                 agent=AgentResponse(
                     id=e.agent.id,
                     name=e.agent.name,
