@@ -46,7 +46,7 @@
     await tick(); // Wait for the new Entry to be rendered in the DOM
     if (!scrollContainer) return;
 
-    const threshold = 150; // pixels from bottom to be considered "anchored"
+    const threshold = 500; // Increased threshold for mobile/tablet fractional pixel scaling
     const isAtBottom =
       scrollContainer.scrollHeight -
         scrollContainer.scrollTop -
