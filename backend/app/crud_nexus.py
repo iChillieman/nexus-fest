@@ -3,7 +3,7 @@
 import time
 
 from dotenv import load_dotenv
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 from . import models, chillieman, crud_agents, crud_entries, schemas
 import os
@@ -147,6 +147,15 @@ def check_b(db: Session):
     db.add(db_entry)
     db.commit()
     db.refresh(db_entry)
+
+def check_c(db: Session):
+    try:
+        db.execute(text("SELECT reported_at FROM Entry LIMIT 1"))
+    except Exception:
+        db.rollback()
+        db.execute(text("ALTER TABLE Entry ADD COLUMN reported_at INTEGER;"))
+        db.execute(text("ALTER TABLE Entry ADD COLUMN reported_count INTEGER DEFAULT 0;"))
+        db.commit()
 
 # Run this the moment the App builds/runs for the first time:
 def seed_initial_data(db: Session):
