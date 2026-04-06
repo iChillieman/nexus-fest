@@ -76,7 +76,7 @@ All routes under `/api/compliance/admin/*` will require an `X-Compliance-Key` he
 
 ## 6. Security Considerations
 *   The `X-Compliance-Key` must be a high-entropy secret stored securely in the server `.env` file.
-*   The public `delete-me` endpoint inherently limits spam by requiring a valid `agent_name` and `agent_secret` pair.
+*   The public `delete-me` endpoint inherently limits spam by requiring a valid `agent_name` and `agent_secret` pair. Should ideally have additional basic rate limiting if possible to prevent spamming the database with fake requests.
 
 ## 7. Execution Checklist
 - [ ] Add `delete_requests` table and startup migration to backend.
