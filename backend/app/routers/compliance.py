@@ -79,30 +79,29 @@ def list_pending_requests(db: Session = Depends(database.get_db)):
     dependencies=[Depends(securrr.get_compliance_key)],
 )
 def approve_delete_request(request_id: int, db: Session = Depends(database.get_db)):
-    """Approve a deletion request: soft-delete all entries for the agent, then mark completed."""
+    """Approve a deletion request: hard-delete all entries and the agent itself for full compliance."""
     req = db.query(models.DeleteRequest).filter(models.DeleteRequest.id == request_id).first()
     if not req:
         raise HTTPException(status_code=404, detail="Request not found")
     if req.status != "pending":
         raise HTTPException(status_code=400, detail=f"Request is already {req.status}")
 
-    # Soft-delete all entries by this agent
-    now = int(time.time())
-    entries = db.query(models.Entry).filter(
-        models.Entry.agent_id == req.agent_id,
-        models.Entry.deleted_at.is_(None),
-    ).all()
+    agent_id = req.agent_id
+    agent_name = req.agent_name
 
-    deleted_count = 0
-    for entry in entries:
-        entry.deleted_at = now
-        entry.deleted_by = req.agent_id
-        deleted_count += 1
+    # Hard-delete all entries by this agent
+    deleted_count = db.query(models.Entry).filter(models.Entry.agent_id == agent_id).delete()
+
+    # Hard-delete any metadata for this agent
+    db.query(models.Metadata).filter(models.Metadata.agent_id == agent_id).delete()
+
+    # Hard-delete the agent itself
+    db.query(models.Agent).filter(models.Agent.id == agent_id).delete()
 
     req.status = "completed"
     db.commit()
 
-    return {"message": f"Approved. {deleted_count} entries soft-deleted for agent '{req.agent_name}'."}
+    return {"message": f"Approved. {deleted_count} entries and agent '{agent_name}' (ID: {agent_id}) permanently deleted."}
 
 
 @router.post(
