@@ -13,7 +13,7 @@ from . import models, crud_nexus, database, chillieman, crud_entries, anti_spam
 from .constants import DBConstants
 from .database import engine
 from .errors import GlobalErrorType, ErrorPayload
-from .routers import agents, events, threads, entries, chilliesockets, ai, chillie
+from .routers import agents, events, threads, entries, chilliesockets, ai, chillie, compliance
 from .routers.forge import auth as forge_auth_router, projects as forge_projects_router, tasks as forge_tasks_router, sockets as forge_sockets_router, workers as forge_workers_router
 from . import forge_crud
 import logging
@@ -36,6 +36,7 @@ async def lifespan(app: FastAPI):
         crud_nexus.seed_initial_data(db)
         crud_nexus.check_b(db)
         crud_nexus.check_c(db)
+        crud_nexus.check_d(db)
         forge_crud.seed_forge_statuses(db)
         print("App has started and data has been seeded!")
         yield
@@ -146,6 +147,7 @@ app.include_router(threads.router)
 app.include_router(chilliesockets.router)
 app.include_router(ai.router)
 app.include_router(chillie.router)
+app.include_router(compliance.router)
 
 # --- The Forge Routers ---
 app.include_router(forge_auth_router.router, prefix="/api/forge")

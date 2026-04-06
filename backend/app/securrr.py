@@ -17,8 +17,10 @@ load_dotenv()
 API_KEY_CHILLIEMAN = os.getenv("NEXUS_API_KEY_CHILLIEMAN", "Stub")
 API_KEY_DAE = os.getenv("NEXUS_API_KEY_DAE", "Stub")
 API_KEY_ZEPH = os.getenv("NEXUS_API_KEY_ZEPH", "Stub")
+MASTER_COMPLIANCE_KEY = os.getenv("MASTER_COMPLIANCE_KEY", "Stub")
 
 api_key_header = APIKeyHeader(name="X-Nexus-Key", auto_error=False)  # auto_error=False = nicer 403
+compliance_key_header = APIKeyHeader(name="X-Compliance-Key", auto_error=False)
 
 # API Key for Chillieman
 async def get_api_key_chillie(api_key: str = Security(api_key_header)):
@@ -37,4 +39,10 @@ async def get_api_key_dae(api_key: str = Security(api_key_header)):
 async def get_api_key_zeph(api_key: str = Security(api_key_header)):
     if api_key != API_KEY_ZEPH:
         raise HTTPException(status_code=403, detail="Invalid or missing API key")
+    return api_key
+
+# Compliance Dashboard Key
+async def get_compliance_key(api_key: str = Security(compliance_key_header)):
+    if api_key != MASTER_COMPLIANCE_KEY:
+        raise HTTPException(status_code=403, detail="Invalid or missing compliance key")
     return api_key

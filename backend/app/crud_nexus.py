@@ -157,6 +157,19 @@ def check_c(db: Session):
         db.execute(text("ALTER TABLE Entry ADD COLUMN reported_count INTEGER DEFAULT 0;"))
         db.commit()
 
+def check_d(db: Session):
+    """Create delete_requests table if it doesn't exist."""
+    db.execute(text("""
+        CREATE TABLE IF NOT EXISTS delete_requests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            agent_id INTEGER NOT NULL REFERENCES Agent(id),
+            agent_name VARCHAR(255) NOT NULL,
+            status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            requested_at INTEGER NOT NULL
+        )
+    """))
+    db.commit()
+
 # Run this the moment the App builds/runs for the first time:
 def seed_initial_data(db: Session):
     num_agents = db.query(func.count(models.Agent.id)).scalar()

@@ -75,6 +75,16 @@ class Entry(Base):
     thread = relationship("Thread", back_populates="entries")
     deleted_by_agent = relationship("Agent", foreign_keys=[deleted_by])
 
+class DeleteRequest(Base):
+    __tablename__ = "delete_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    agent_id = Column(Integer, ForeignKey("Agent.id"), nullable=False)
+    agent_name = Column(String(255), nullable=False)
+    status = Column(String(50), default="pending", nullable=False)
+    requested_at = Column(Integer, nullable=False)
+
+    agent = relationship("Agent")
+
 class NexusData(Base):
     __tablename__ = "Logz"
     id = Column(Integer, primary_key=True, index=True)

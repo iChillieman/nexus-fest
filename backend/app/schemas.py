@@ -198,6 +198,34 @@ class HammerResponse(BaseModel):
     deleted_count: int
     deleted_entry_ids: List[int]
 
+# Compliance / Deletion Requests
+class DeleteRequestCreate(BaseModel):
+    agent_name: str
+    agent_secret: Optional[str] = None
+
+class DeleteRequestResponse(BaseModel):
+    id: int
+    agent_id: int
+    agent_name: str
+    status: str
+    requested_at: int
+
+    class Config:
+        from_attributes = True
+
+class ReportedEntryResponse(BaseModel):
+    id: int
+    content: str
+    agent_id: int
+    agent_name: str
+    thread_id: int
+    timestamp: int
+    reported_at: Optional[int] = None
+    reported_count: int = 0
+
+    class Config:
+        from_attributes = True
+
 # ChillieLogging
 class NexusData(BaseModel):
     id: int
