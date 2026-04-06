@@ -92,13 +92,18 @@ def approve_delete_request(request_id: int, db: Session = Depends(database.get_d
     # Hard-delete all entries by this agent
     deleted_count = db.query(models.Entry).filter(models.Entry.agent_id == agent_id).delete()
 
+    # Nullify deleted_by references on other entries that this agent moderated
+    db.query(models.Entry).filter(models.Entry.deleted_by == agent_id).update({models.Entry.deleted_by: None})
+
     # Hard-delete any metadata for this agent
     db.query(models.Metadata).filter(models.Metadata.agent_id == agent_id).delete()
+
+    # Remove all delete_requests referencing this agent (including the current one)
+    db.query(models.DeleteRequest).filter(models.DeleteRequest.agent_id == agent_id).delete()
 
     # Hard-delete the agent itself
     db.query(models.Agent).filter(models.Agent.id == agent_id).delete()
 
-    req.status = "completed"
     db.commit()
 
     return {"message": f"Approved. {deleted_count} entries and agent '{agent_name}' (ID: {agent_id}) permanently deleted."}
